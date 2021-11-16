@@ -1,11 +1,5 @@
-using System;
-using OpenTK;
-using OpenTK.Graphics;
-using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
-using OpenTK.Windowing.GraphicsLibraryFramework;
-using All = OpenTK.Graphics.ES11.All;
 using BufferTargetArb = OpenTK.Graphics.ES11.BufferTargetArb;
 using ClearBufferMask = OpenTK.Graphics.ES11.ClearBufferMask;
 using GL = OpenTK.Graphics.ES11.GL;
@@ -23,11 +17,11 @@ namespace VoxelGame
             Title = title;
         }
 
-        private Shader Shader;
+        private Shader _shader;
         
-        private int vertexBufferObject;
+        private int _vertexBufferObject;
 
-        private float[] vertices =
+        private float[] _vertices =
         {
             -0.5f, -0.5f, 0.0f,
             0.5f, -0.5f, 0.0f,
@@ -38,9 +32,9 @@ namespace VoxelGame
         {
             GL.ClearColor(1f, 0f, 1f, 1f);
 
-            vertexBufferObject = GL.GenBuffer();
+            _vertexBufferObject = GL.GenBuffer();
 
-            Shader = new("shader.vert", "shader.frag");
+            _shader = new("shader.vert", "shader.frag");
 
             base.OnLoad();
         }
@@ -64,8 +58,8 @@ namespace VoxelGame
         protected override void OnUnload()
         {
             GL.BindBuffer(BufferTargetArb.ArrayBuffer, 0);
-            GL.DeleteBuffer(vertexBufferObject);
-            Shader.Dispose();
+            GL.DeleteBuffer(_vertexBufferObject);
+            _shader.Dispose();
             base.OnUnload();
         }
 
