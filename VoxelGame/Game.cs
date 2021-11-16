@@ -1,8 +1,8 @@
+using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
-using BufferTargetArb = OpenTK.Graphics.ES11.BufferTargetArb;
-using ClearBufferMask = OpenTK.Graphics.ES11.ClearBufferMask;
-using GL = OpenTK.Graphics.ES11.GL;
+using ClearBufferMask = OpenTK.Graphics.OpenGL.ClearBufferMask;
+using GL = OpenTK.Graphics.OpenGL.GL;
 
 namespace VoxelGame
 {
@@ -28,23 +28,29 @@ namespace VoxelGame
             0.0f, -0.5f, 0.0f
         };
         
+        private int _vertexArrayObject;
+        
         protected override void OnLoad()
         {
-            GL.ClearColor(1f, 0f, 1f, 1f);
-
-            _vertexBufferObject = GL.GenBuffer();
+            GL.ClearColor(0f, 0f, 0f, 0f);
 
             _shader = new("shader.vert", "shader.frag");
+            _shader.Use();
 
+            DrawTriangle();
+            
             base.OnLoad();
         }
         
         protected override void OnRenderFrame(FrameEventArgs e)
         {
+            GL.ClearColor(0f, 0f, 0f, 0f);
             GL.Clear(ClearBufferMask.ColorBufferBit);
 
-            Context.SwapBuffers();
+            DrawTriangle();
             
+            Context.SwapBuffers();
+
             base.OnRenderFrame(e);
         }
 
@@ -57,12 +63,32 @@ namespace VoxelGame
         
         protected override void OnUnload()
         {
-            GL.BindBuffer(BufferTargetArb.ArrayBuffer, 0);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             GL.DeleteBuffer(_vertexBufferObject);
             _shader.Dispose();
             base.OnUnload();
         }
 
+        private void DrawTriangle()
+        {
+            _vertexArrayObject = GL.GenVertexArray();
+            _vertexBufferObject = GL.GenBuffer();
+
+            GL.BindVertexArray(_vertexArrayObject);
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
+            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
+            
+            GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            GL.BindVertexArray(0);
+            GL.DeleteVertexArray(_vertexArrayObject);
+            GL.DeleteBuffer(_vertexBufferObject);
+        }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
