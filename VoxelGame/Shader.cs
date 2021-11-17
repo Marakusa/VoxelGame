@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
-using OpenTK.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 
 namespace VoxelGame
 {

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using OpenTK.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using SixLabors.ImageSharp;
@@ -26,43 +26,39 @@ namespace VoxelGame
         private Shader _shader;
         private int _vertexArrayObject;
         private int _vertexBufferObject;
+        private int _incidesBufferObject;
         private int _elementBufferObject;
 
         private float[] _vertices =
         {
             // x     y     z    Texture(x, y)
+            0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+            1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+            /*
             0.5f,  0.5f,  0.0f, 1.0f, 1.0f,
             0.5f,  -0.5f, 0.0f, 1.0f, 0.0f,
             -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
             0.5f,  0.5f,  0.0f, 1.0f, 1.0f,
             -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-            -0.5f, 0.5f,  0.0f, 0.0f, 1.0f,
+            -0.5f, 0.5f,  0.0f, 0.0f, 1.0f,*/
+        };
+
+        private float[] _incides =
+        {
+            // x     y     z    Texture(x, y)
+            0, 1, 2,
+            2, 3, 0,
+            /*0.5f,  0.5f,  0.0f, 1.0f, 1.0f,
+            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+            -0.5f, 0.5f,  0.0f, 0.0f, 1.0f,*/
         };
         
         protected override void OnLoad()
         {
             _shader = new("shader.vert", "shader.frag");
             
-            _vertexBufferObject = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
-           
-            /*_elementBufferObject = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);*/
-            
-            var positionLocation = GL.GetAttribLocation(_shader.Handle, "position");
-
-            _vertexArrayObject = GL.GenVertexArray();
-            GL.BindVertexArray(_vertexArrayObject);
-            GL.VertexAttribPointer(positionLocation, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
-            
-            int texCoordLocation = _shader.GetAttribLocation("aTexCoord");
-            GL.EnableVertexAttribArray(texCoordLocation);
-            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
-            
-            GL.EnableVertexAttribArray(positionLocation);
-
             GL.ClearColor(0.4f, 0.6f, 1.0f, 0.0f);
 
             base.OnLoad();
@@ -76,19 +72,49 @@ namespace VoxelGame
             GL.BindVertexArray(_vertexArrayObject);
             GL.UseProgram(_shader.Handle);
 
-            LoadTextures();
+            RenderTriangle();
 
-            //GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, _vertices.Length / 5);
+            LoadTextures();
 
             Context.SwapBuffers();
             
             base.OnRenderFrame(e);
         }
 
+        private void RenderTriangle()
+        {
+            _vertexArrayObject = GL.GenVertexArray();
+            _vertexBufferObject = GL.GenBuffer();
+            GL.BindVertexArray(_vertexArrayObject);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
+            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+            
+            _incidesBufferObject = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _incidesBufferObject);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, _incides.Length * sizeof(float), _incides, BufferUsageHint.StaticDraw);
+            
+            var positionLocation = GL.GetAttribLocation(_shader.Handle, "position");
+            GL.EnableVertexAttribArray(positionLocation);
+            GL.VertexAttribPointer(positionLocation, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
+            
+            int texCoordLocation = _shader.GetAttribLocation("aTexCoord");
+            GL.EnableVertexAttribArray(texCoordLocation);
+            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+
+            /*_elementBufferObject = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);*/
+            
+            //GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, _vertices.Length / 5);
+        }
+
         private void LoadTextures()
         {
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            int texture = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, texture);
+            
+            /*GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
 
             float[] borderColor = new[] {1.0f, 1.0f, 0.0f, 1.0f};
@@ -97,7 +123,7 @@ namespace VoxelGame
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
             
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);*/
 
             Image<Rgba32> image = Image.Load<Rgba32>("dirt.png");
             image.Mutate(x => x.Flip(FlipMode.Vertical));
@@ -133,6 +159,7 @@ namespace VoxelGame
             GL.UseProgram(0);
             GL.DeleteBuffer(_vertexBufferObject);
             GL.DeleteBuffer(_elementBufferObject);
+            GL.DeleteBuffer(_incidesBufferObject);
             GL.DeleteVertexArray(_vertexArrayObject);
             _shader.Dispose();
             base.OnUnload();

@@ -8,7 +8,7 @@ namespace VoxelGame
         {
             Console.WriteLine("Voxel Game by Markus Kannisto");
             
-            using (Game game = new(800, 800, "Voxel Game"))
+            using (Game game = new(1360, 786, "Voxel Game"))
             {
                 game.Run();
             }
