@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Reflection.Metadata;
 using System.Text;
 using OpenTK.Graphics.OpenGL;
 
@@ -8,8 +7,10 @@ namespace VoxelGame
 {
     public class Shader
     {
-        private int handle;
-
+        public int Handle;
+        private int vertexShader;
+        private int fragmentShader;
+        
         public Shader(string vertexPath, string fragmentPath)
         {
             string vertexShaderSource;
@@ -25,57 +26,50 @@ namespace VoxelGame
             {
                 fragmentShaderSource = reader.ReadToEnd();
             }
-
-            int vertexShader = GL.CreateShader(ShaderType.VertexShader);
-            int fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
             
+            vertexShader = GL.CreateShader(ShaderType.VertexShader);
             GL.ShaderSource(vertexShader, vertexShaderSource);
-            GL.ShaderSource(fragmentShader, fragmentShaderSource);
-            
             GL.CompileShader(vertexShader);
+
+            fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
+            GL.ShaderSource(fragmentShader, fragmentShaderSource);
             GL.CompileShader(fragmentShader);
 
-            string infoLogVertex = GL.GetShaderInfoLog(vertexShader);
-            if (infoLogVertex != String.Empty)
-                Console.WriteLine(infoLogVertex);
-
-            string infoLogFragment = GL.GetShaderInfoLog(fragmentShader);
-            if (infoLogFragment != String.Empty)
-                Console.WriteLine(infoLogFragment);
-
-            handle = GL.CreateProgram();
-            
-            GL.AttachShader(handle, vertexShader);
-            GL.AttachShader(handle, fragmentShader);
-            
-            GL.LinkProgram(handle);
-            
-            GL.DetachShader(handle, vertexShader);
-            GL.DetachShader(handle, fragmentShader);
-            GL.DeleteShader(vertexShader);
-            GL.DeleteShader(fragmentShader);
+            Handle = GL.CreateProgram();
+            GL.AttachShader(Handle, vertexShader);
+            GL.AttachShader(Handle, fragmentShader);
+            GL.LinkProgram(Handle);
         }
 
+        public int GetAttribLocation(string attribName)
+        {
+            return GL.GetAttribLocation(Handle, attribName);
+        }
+        
         public void Use()
         {
-            GL.UseProgram(handle);
+            GL.UseProgram(Handle);
         }
 
-        private bool disposedValue = false;
+        private bool _disposedValue = false;
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposedValue)
             {
-                GL.DeleteProgram(handle);
+                GL.DetachShader(Handle, vertexShader);
+                GL.DetachShader(Handle, fragmentShader);
+                GL.DeleteShader(vertexShader);
+                GL.DeleteShader(fragmentShader);
+                GL.DeleteProgram(Handle);
 
-                disposedValue = true;
+                _disposedValue = true;
             }
         }
 
         ~Shader()
         {
-            GL.DeleteProgram(handle);
+            GL.DeleteProgram(Handle);
         }
 
         public void Dispose()
