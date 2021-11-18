@@ -113,10 +113,8 @@ namespace VoxelGame
             if (x > 0f && y > 0f)
             {
                 Matrix4 model = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(0.0f));
-                Matrix4 view = Matrix4.LookAt(PlayerCamera.Position, PlayerCamera.Position + PlayerCamera.Front,
-                    PlayerCamera.CameraUp);
-                Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f),
-                    x / y, 0.1f, 100.0f);
+                Matrix4 view = Matrix4.LookAt(PlayerCamera.Position, PlayerCamera.Position + PlayerCamera.Front, PlayerCamera.CameraUp);
+                Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(PlayerCamera.FieldOfView), x / y, 0.1f, 100.0f);
 
                 _shader.SetMatrix4("model", model);
                 _shader.SetMatrix4("view", view);

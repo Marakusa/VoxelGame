@@ -9,6 +9,8 @@ namespace VoxelGame
 {
     public class Camera
     {
+        public float FieldOfView = 70.0f;
+        
         public Vector3 Position;
         public Vector3 CameraTarget;
         public Vector3 CameraDirection;
@@ -22,8 +24,8 @@ namespace VoxelGame
 
         public Camera()
         {
-            Position = new Vector3(0.0f, 0.0f, 3.0f);
-            CameraTarget = new Vector3(0.0f, 0.0f, -1.0f);
+            Position = new Vector3(0.5f, 0.5f, -3.0f);
+            CameraTarget = Position + new Vector3(0.0f, 0.0f, 1.0f);
             CameraDirection = Vector3.Normalize(Position - CameraTarget);
             
             Update();
