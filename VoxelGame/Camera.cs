@@ -1,4 +1,8 @@
+using System;
 using OpenTK.Mathematics;
+using OpenTK.Graphics.OpenGL4;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace VoxelGame
@@ -9,6 +13,7 @@ namespace VoxelGame
         public Vector3 CameraTarget;
         public Vector3 CameraDirection;
 
+        public Vector3 Front;
         public Vector3 Up;
         public Vector3 CameraRight;
         public Vector3 CameraUp;
@@ -27,56 +32,43 @@ namespace VoxelGame
         public void Update()
         {
             Up = Vector3.UnitY;
+            Front = Vector3.UnitZ;
             CameraRight = Vector3.Normalize(Vector3.Cross(Up, CameraDirection));
             CameraUp = Vector3.Cross(CameraDirection, CameraRight);
 
             Matrix4 view = Matrix4.LookAt(Position, CameraTarget, CameraUp);
         }
 
-        public void Movement()
-        {KeyboardState input = KeyboardState.GetSnapshot();
-
-            if (input.IsKeyDown(Keys.Escape))
+        public void Movement(KeyboardState input, FrameEventArgs e)
+        {
+            if (input.IsKeyDown(Keys.W))
             {
-                Console.WriteLine("Escape");
-            }
-            if (!Focused) // check to see if the window is focused
-            {
-                return;
+                Position += Front * Speed * (float)e.Time; //Forward 
             }
 
-            KeyboardState input = Keyboard.GetState();
-
-            //...
-
-            if (input.IsKeyDown(Key.W))
+            if (input.IsKeyDown(Keys.S))
             {
-                position += front * speed; //Forward 
+                Position -= Front * Speed * (float)e.Time; //Backwards
             }
 
-            if (input.IsKeyDown(Key.S))
+            if (input.IsKeyDown(Keys.A))
             {
-                position -= front * speed; //Backwards
+                Position -= Vector3.Normalize(Vector3.Cross(Front, Up)) * Speed * (float)e.Time; //Left
             }
 
-            if (input.IsKeyDown(Key.A))
+            if (input.IsKeyDown(Keys.D))
             {
-                position -= Vector3.Normalize(Vector3.Cross(front, up)) * speed; //Left
+                Position += Vector3.Normalize(Vector3.Cross(Front, Up)) * Speed * (float)e.Time; //Right
             }
 
-            if (input.IsKeyDown(Key.D))
+            if (input.IsKeyDown(Keys.Space))
             {
-                position += Vector3.Normalize(Vector3.Cross(front, up)) * speed; //Right
+                Position += Up * Speed * (float)e.Time; //Up 
             }
 
-            if (input.IsKeyDown(Key.Space))
+            if (input.IsKeyDown(Keys.LeftShift))
             {
-                position += up * speed; //Up 
-            }
-
-            if (input.IsKeyDown(Key.LShift))
-            {
-                position -= up * speed; //Down
+                Position -= Up * Speed * (float)e.Time; //Down
             }
         }
     }

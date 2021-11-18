@@ -8,10 +8,9 @@ layout (location = 2) in vec4 aColor;
 
 out vec2 texCoord;
 
-uniform mat4 proj = mat4(1);
-uniform mat4 cam = mat4(1);
-uniform mat4 obj = mat4(1);
-uniform mat4 ani = mat4(1);
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
 out vec4 color;
 
@@ -19,5 +18,5 @@ void main()
 {
     texCoord = aTexCoord;
     color = aColor;
-    gl_Position = proj * cam * obj * ani * vec4(position, 1.0);
+    gl_Position = vec4(position, 1.0) * model * view * projection;
 }

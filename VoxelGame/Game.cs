@@ -1,10 +1,14 @@
+using System;
 using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using Image = SixLabors.ImageSharp.Image;
 
 namespace VoxelGame
 {
@@ -17,7 +21,7 @@ namespace VoxelGame
                 {
                     Size = new OpenTK.Mathematics.Vector2i(width, height),
                     Title = title,
-                    APIVersion = new System.Version(4, 6),
+                    APIVersion = new Version(4, 6),
                     API = ContextAPI.OpenGL,
                     NumberOfSamples = 8,
                 })
@@ -43,12 +47,19 @@ namespace VoxelGame
             1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
             0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
             
-            -0.5f, 1.2f, 1.0f, 0.0f, 1.0f,
-            -0.5f, 0.2f, 1.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, -1.0f, 0.0f, 1.0f,
+            0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
             0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
             0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
             0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-            -0.5f, 1.2f, 1.0f, 0.0f, 1.0f,
+            0.0f, 1.0f, -1.0f, 0.0f, 1.0f,
+            
+            1.0f, 1.0f, -1.0f, 0.0f, 1.0f,
+            1.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
+            0.0f, 1.0f, -1.0f, 1.0f, 1.0f,
+            0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, -1.0f, 0.0f, 1.0f,
             
             /*
             0.5f,  0.5f,  0.0f, 1.0f, 1.0f,
@@ -69,13 +80,29 @@ namespace VoxelGame
             -0.5f, 0.5f,  0.0f, 0.0f, 1.0f,*/
         };
         
+        private Texture _texture;
+        private Texture _texture2;
+        
         protected override void OnLoad()
         {
             _shader = new("shader.vert", "shader.frag");
             
             GL.ClearColor(0.4f, 0.6f, 1.0f, 0.0f);
 
+            Matrix4 model = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-55.0f));
+            Matrix4 view = Matrix4.CreateTranslation(0.0f, 0.0f, -3.0f);
+            Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45.0f), Size.X / Size.Y, 0.1f, 100.0f);
+            
+            _shader.SetMatrix4("model", model);
+            _shader.SetMatrix4("view", view);
+            _shader.SetMatrix4("projection", projection);
+            
             PlayerCamera = new Camera();
+            
+            _texture = Texture.LoadFromFile("Resources/dirt.png");
+            _texture.Use(TextureUnit.Texture0);
+
+            _shader.SetInt("texture0", 0);
 
             base.OnLoad();
         }
@@ -89,8 +116,6 @@ namespace VoxelGame
             GL.UseProgram(_shader.Handle);
 
             RenderTriangle();
-
-            LoadTextures();
 
             Context.SwapBuffers();
             
@@ -129,36 +154,6 @@ namespace VoxelGame
             GL.DrawArrays(PrimitiveType.Triangles, 0, _vertices.Length / _rowLength);
         }
 
-        private void LoadTextures()
-        {
-            int texture = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, texture);
-            
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
-
-            Image<Rgba32> image = Image.Load<Rgba32>("dirt.png");
-            image.Mutate(x => x.Flip(FlipMode.Vertical));
-
-            var pixels = new List<byte>(4 * image.Width * image.Height);
-            
-            for (int y = 0; y < image.Height; y++) {
-                var row = image.GetPixelRowSpan(y);
-
-                for (int x = 0; x < image.Width; x++) {
-                    pixels.Add(row[x].R);
-                    pixels.Add(row[x].G);
-                    pixels.Add(row[x].B);
-                    pixels.Add(row[x].A);
-                }
-            }
-            
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, image.Width, image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
-        }
-
         protected override void OnResize(ResizeEventArgs e)
         {
             GL.Viewport(0, 0, Size.X, Size.Y);
@@ -182,9 +177,13 @@ namespace VoxelGame
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
-            PlayerCamera.Movement();
-            PlayerCamera.Update();
+            if (!IsFocused) return;
 
+            KeyboardState input = KeyboardState.GetSnapshot();
+
+            PlayerCamera.Movement(input, e);
+            PlayerCamera.Update();
+            
             base.OnUpdateFrame(e);
         }
     }
