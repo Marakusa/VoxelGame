@@ -11,14 +11,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Content Include="Resources\dirt.png">
+        <Content Include="Resources\*.*">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="shader.vert">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="shader.frag">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
 

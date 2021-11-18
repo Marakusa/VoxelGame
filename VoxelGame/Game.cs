@@ -1,14 +1,9 @@
 using System;
-using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
-using Image = SixLabors.ImageSharp.Image;
 
 namespace VoxelGame
 {
@@ -19,7 +14,7 @@ namespace VoxelGame
                 new(),
                 new()
                 {
-                    Size = new OpenTK.Mathematics.Vector2i(width, height),
+                    Size = new Vector2i(width, height),
                     Title = title,
                     APIVersion = new Version(4, 6),
                     API = ContextAPI.OpenGL,
@@ -32,8 +27,7 @@ namespace VoxelGame
         private Shader _shader;
         private int _vertexArrayObject;
         private int _vertexBufferObject;
-        private int _incidesBufferObject;
-        private int _elementBufferObject;
+        private int _indicesBufferObject;
 
         private int _rowLength = 5;
         
@@ -70,7 +64,7 @@ namespace VoxelGame
             -0.5f, 0.5f,  0.0f, 0.0f, 1.0f,*/
         };
 
-        private float[] _incides =
+        private float[] _indices =
         {
             // x     y     z    Texture(x, y)
             0, 1, 2,
@@ -81,11 +75,10 @@ namespace VoxelGame
         };
         
         private Texture _texture;
-        private Texture _texture2;
         
         protected override void OnLoad()
         {
-            _shader = new("shader.vert", "shader.frag");
+            _shader = new("Resources/shader.vert", "Resources/shader.frag");
             
             GL.ClearColor(0.4f, 0.6f, 1.0f, 0.0f);
 
@@ -121,14 +114,14 @@ namespace VoxelGame
                 _shader.SetMatrix4("projection", projection);
             }
 
-            RenderTriangle();
+            Render();
             
             Context.SwapBuffers();
             
             base.OnRenderFrame(e);
         }
 
-        private void RenderTriangle()
+        private void Render()
         {
             _vertexArrayObject = GL.GenVertexArray();
             _vertexBufferObject = GL.GenBuffer();
@@ -136,9 +129,9 @@ namespace VoxelGame
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
             GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
             
-            _incidesBufferObject = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _incidesBufferObject);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, _incides.Length * sizeof(float), _incides, BufferUsageHint.StaticDraw);
+            _indicesBufferObject = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indicesBufferObject);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(float), _indices, BufferUsageHint.StaticDraw);
             
             var positionLocation = GL.GetAttribLocation(_shader.Handle, "position");
             GL.EnableVertexAttribArray(positionLocation);
@@ -152,12 +145,17 @@ namespace VoxelGame
             //GL.EnableVertexAttribArray(colorLocation);
             //GL.VertexAttribPointer(colorLocation, 4, VertexAttribPointerType.Float, false, _rowLength * sizeof(float), 3 * sizeof(float));
 
-            /*_elementBufferObject = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);*/
-            
             //GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
             GL.DrawArrays(PrimitiveType.Triangles, 0, _vertices.Length / _rowLength);
+            
+            GL.DeleteVertexArray(_vertexArrayObject);
+            GL.DeleteBuffer(_vertexBufferObject);
+            GL.DeleteBuffer(_indicesBufferObject);
+            //GL.DeleteBuffer(_elementBufferObject);
+            GL.BindVertexArray(0);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            //GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+            GL.UseProgram(0);
         }
 
         protected override void OnResize(ResizeEventArgs e)
@@ -169,14 +167,6 @@ namespace VoxelGame
         
         protected override void OnUnload()
         {
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
-            GL.BindVertexArray(0);
-            GL.UseProgram(0);
-            GL.DeleteBuffer(_vertexBufferObject);
-            GL.DeleteBuffer(_elementBufferObject);
-            GL.DeleteBuffer(_incidesBufferObject);
-            GL.DeleteVertexArray(_vertexArrayObject);
             _shader.Dispose();
             base.OnUnload();
         }

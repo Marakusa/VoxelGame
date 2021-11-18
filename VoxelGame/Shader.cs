@@ -7,59 +7,52 @@ using OpenTK.Mathematics;
 
 namespace VoxelGame
 {
-    public class Shader
+    public sealed class Shader
     {
-        public int Handle;
-        private int vertexShader;
-        private int fragmentShader;
-        
+        public readonly int Handle;
+
         private readonly Dictionary<string, int> _uniformLocations;
         
         public Shader(string vertexPath, string fragmentPath)
         {
             string vertexShaderSource;
-
-            using (StreamReader reader = new(vertexPath, Encoding.UTF8))
-            {
-                vertexShaderSource = reader.ReadToEnd();
-            }
-
             string fragmentShaderSource;
-
-            using (StreamReader reader = new(fragmentPath, Encoding.UTF8))
-            {
-                fragmentShaderSource = reader.ReadToEnd();
-            }
+            using (StreamReader reader = new(vertexPath, Encoding.UTF8)) { vertexShaderSource = reader.ReadToEnd(); }
+            using (StreamReader reader = new(fragmentPath, Encoding.UTF8)) { fragmentShaderSource = reader.ReadToEnd(); }
             
-            vertexShader = GL.CreateShader(ShaderType.VertexShader);
+            var vertexShader = GL.CreateShader(ShaderType.VertexShader);
+            var fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
+            
             GL.ShaderSource(vertexShader, vertexShaderSource);
-            GL.CompileShader(vertexShader);
-
-            fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
             GL.ShaderSource(fragmentShader, fragmentShaderSource);
+            
+            GL.CompileShader(vertexShader);
             GL.CompileShader(fragmentShader);
 
             Handle = GL.CreateProgram();
+            
             GL.AttachShader(Handle, vertexShader);
             GL.AttachShader(Handle, fragmentShader);
-            GL.LinkProgram(Handle);
             
-            // First, we have to get the number of active uniforms in the shader.
+            GL.LinkProgram(Handle);
+
+            _uniformLocations = new Dictionary<string, int>();
+            GetUniforms();
+            
+            GL.DetachShader(Handle, vertexShader);
+            GL.DetachShader(Handle, fragmentShader);
+            GL.DeleteShader(vertexShader);
+            GL.DeleteShader(fragmentShader);
+        }
+
+        private void GetUniforms()
+        {
             GL.GetProgram(Handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);
 
-            // Next, allocate the dictionary to hold the locations.
-            _uniformLocations = new Dictionary<string, int>();
-
-            // Loop over all the uniforms,
             for (var i = 0; i < numberOfUniforms; i++)
             {
-                // get the name of this uniform,
                 var key = GL.GetActiveUniform(Handle, i, out _, out _);
-
-                // get the location,
                 var location = GL.GetUniformLocation(Handle, key);
-
-                // and then add it to the dictionary.
                 _uniformLocations.Add(key, location);
             }
         }
@@ -123,20 +116,14 @@ namespace VoxelGame
             GL.Uniform3(_uniformLocations[name], data);
         }
         
-        private bool _disposedValue = false;
+        private bool _disposedValue;
 
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
-            if (!_disposedValue)
-            {
-                GL.DetachShader(Handle, vertexShader);
-                GL.DetachShader(Handle, fragmentShader);
-                GL.DeleteShader(vertexShader);
-                GL.DeleteShader(fragmentShader);
-                GL.DeleteProgram(Handle);
-
-                _disposedValue = true;
-            }
+            if (_disposedValue) return;
+            _disposedValue = disposing;
+            
+            GL.DeleteProgram(Handle);
         }
 
         ~Shader()
