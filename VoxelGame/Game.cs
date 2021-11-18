@@ -23,12 +23,16 @@ namespace VoxelGame
                 })
         { }
 
+        public Camera PlayerCamera;
+        
         private Shader _shader;
         private int _vertexArrayObject;
         private int _vertexBufferObject;
         private int _incidesBufferObject;
         private int _elementBufferObject;
 
+        private int _rowLength = 5;
+        
         private float[] _vertices =
         {
             // x     y     z    Texture(x, y)
@@ -36,6 +40,16 @@ namespace VoxelGame
             0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
             1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
             1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            
+            -0.5f, 1.2f, 1.0f, 0.0f, 1.0f,
+            -0.5f, 0.2f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+            0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            -0.5f, 1.2f, 1.0f, 0.0f, 1.0f,
+            
             /*
             0.5f,  0.5f,  0.0f, 1.0f, 1.0f,
             0.5f,  -0.5f, 0.0f, 1.0f, 0.0f,
@@ -60,6 +74,8 @@ namespace VoxelGame
             _shader = new("shader.vert", "shader.frag");
             
             GL.ClearColor(0.4f, 0.6f, 1.0f, 0.0f);
+
+            PlayerCamera = new Camera();
 
             base.OnLoad();
         }
@@ -95,18 +111,22 @@ namespace VoxelGame
             
             var positionLocation = GL.GetAttribLocation(_shader.Handle, "position");
             GL.EnableVertexAttribArray(positionLocation);
-            GL.VertexAttribPointer(positionLocation, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
+            GL.VertexAttribPointer(positionLocation, 3, VertexAttribPointerType.Float, false, _rowLength * sizeof(float), 0);
             
             int texCoordLocation = _shader.GetAttribLocation("aTexCoord");
             GL.EnableVertexAttribArray(texCoordLocation);
-            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, _rowLength * sizeof(float), 3 * sizeof(float));
+
+            //int colorLocation = _shader.GetAttribLocation("aColor");
+            //GL.EnableVertexAttribArray(colorLocation);
+            //GL.VertexAttribPointer(colorLocation, 4, VertexAttribPointerType.Float, false, _rowLength * sizeof(float), 3 * sizeof(float));
 
             /*_elementBufferObject = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
             GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);*/
             
             //GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, _vertices.Length / 5);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, _vertices.Length / _rowLength);
         }
 
         private void LoadTextures()
@@ -114,16 +134,11 @@ namespace VoxelGame
             int texture = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, texture);
             
-            /*GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
 
-            float[] borderColor = new[] {1.0f, 1.0f, 0.0f, 1.0f};
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBorderColor, borderColor);
-            
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-            
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);*/
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
 
             Image<Rgba32> image = Image.Load<Rgba32>("dirt.png");
             image.Mutate(x => x.Flip(FlipMode.Vertical));
@@ -167,12 +182,8 @@ namespace VoxelGame
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
-            /*KeyboardState input = KeyboardState.GetSnapshot();
-
-            if (input.IsKeyDown(Keys.Escape))
-            {
-                Console.WriteLine("Escape");
-            }*/
+            PlayerCamera.Movement();
+            PlayerCamera.Update();
 
             base.OnUpdateFrame(e);
         }
