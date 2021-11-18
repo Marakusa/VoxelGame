@@ -18,7 +18,7 @@ namespace VoxelGame
         public Vector3 CameraRight;
         public Vector3 CameraUp;
 
-      public  float Speed = 1.5f;
+        public float Speed = 1.5f;
 
         public Camera()
         {
@@ -32,11 +32,9 @@ namespace VoxelGame
         public void Update()
         {
             Up = Vector3.UnitY;
-            Front = Vector3.UnitZ;
+            Front = new Vector3(0.0f, 0.0f, 1.0f);
             CameraRight = Vector3.Normalize(Vector3.Cross(Up, CameraDirection));
             CameraUp = Vector3.Cross(CameraDirection, CameraRight);
-
-            Matrix4 view = Matrix4.LookAt(Position, CameraTarget, CameraUp);
         }
 
         public void Movement(KeyboardState input, FrameEventArgs e)
@@ -44,11 +42,13 @@ namespace VoxelGame
             if (input.IsKeyDown(Keys.W))
             {
                 Position += Front * Speed * (float)e.Time; //Forward 
+                System.Console.WriteLine(Position.ToString());
             }
 
             if (input.IsKeyDown(Keys.S))
             {
                 Position -= Front * Speed * (float)e.Time; //Backwards
+                System.Console.WriteLine(Position.ToString());
             }
 
             if (input.IsKeyDown(Keys.A))

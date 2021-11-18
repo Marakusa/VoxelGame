@@ -14,7 +14,7 @@ namespace VoxelGame
 {
     public class Game : GameWindow
     {
-        public Game(int width, int height, string title) 
+        public Game(int width, int height, string title)
             : base(
                 new(),
                 new()
@@ -89,21 +89,13 @@ namespace VoxelGame
             
             GL.ClearColor(0.4f, 0.6f, 1.0f, 0.0f);
 
-            Matrix4 model = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-55.0f));
-            Matrix4 view = Matrix4.CreateTranslation(0.0f, 0.0f, -3.0f);
-            Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45.0f), Size.X / Size.Y, 0.1f, 100.0f);
-            
-            _shader.SetMatrix4("model", model);
-            _shader.SetMatrix4("view", view);
-            _shader.SetMatrix4("projection", projection);
-            
             PlayerCamera = new Camera();
             
             _texture = Texture.LoadFromFile("Resources/dirt.png");
             _texture.Use(TextureUnit.Texture0);
 
             _shader.SetInt("texture0", 0);
-
+            
             base.OnLoad();
         }
         
@@ -115,8 +107,16 @@ namespace VoxelGame
             GL.BindVertexArray(_vertexArrayObject);
             GL.UseProgram(_shader.Handle);
 
-            RenderTriangle();
+            Matrix4 model = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-55.0f));
+            Matrix4 view = Matrix4.LookAt(PlayerCamera.Position, PlayerCamera.CameraTarget, PlayerCamera.CameraUp);
+            Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45.0f), Size.X / Size.Y, 0.1f, 100.0f);
+            
+            _shader.SetMatrix4("model", model);
+            _shader.SetMatrix4("view", view);
+            _shader.SetMatrix4("projection", projection);
 
+            RenderTriangle();
+            
             Context.SwapBuffers();
             
             base.OnRenderFrame(e);
