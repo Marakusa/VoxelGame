@@ -107,13 +107,21 @@ namespace VoxelGame
             GL.BindVertexArray(_vertexArrayObject);
             GL.UseProgram(_shader.Handle);
 
-            Matrix4 model = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-55.0f));
-            Matrix4 view = Matrix4.LookAt(PlayerCamera.Position, PlayerCamera.CameraTarget, PlayerCamera.CameraUp);
-            Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45.0f), Size.X / Size.Y, 0.1f, 100.0f);
+            float x = Size.X;
+            float y = Size.Y;
             
-            _shader.SetMatrix4("model", model);
-            _shader.SetMatrix4("view", view);
-            _shader.SetMatrix4("projection", projection);
+            if (x > 0f && y > 0f)
+            {
+                Matrix4 model = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(0.0f));
+                Matrix4 view = Matrix4.LookAt(PlayerCamera.Position, PlayerCamera.Position + PlayerCamera.Front,
+                    PlayerCamera.CameraUp);
+                Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f),
+                    x / y, 0.1f, 100.0f);
+
+                _shader.SetMatrix4("model", model);
+                _shader.SetMatrix4("view", view);
+                _shader.SetMatrix4("projection", projection);
+            }
 
             RenderTriangle();
             

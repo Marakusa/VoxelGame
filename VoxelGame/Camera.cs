@@ -42,13 +42,11 @@ namespace VoxelGame
             if (input.IsKeyDown(Keys.W))
             {
                 Position += Front * Speed * (float)e.Time; //Forward 
-                System.Console.WriteLine(Position.ToString());
             }
 
             if (input.IsKeyDown(Keys.S))
             {
                 Position -= Front * Speed * (float)e.Time; //Backwards
-                System.Console.WriteLine(Position.ToString());
             }
 
             if (input.IsKeyDown(Keys.A))
@@ -70,6 +68,8 @@ namespace VoxelGame
             {
                 Position -= Up * Speed * (float)e.Time; //Down
             }
+            
+            System.Console.WriteLine(Position.ToString());
         }
     }
 }
