@@ -5,7 +5,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-namespace VoxelGame
+namespace VoxelGame.Engine
 {
     public class Game : GameWindow
     {
@@ -84,7 +84,7 @@ namespace VoxelGame
 
             PlayerCamera = new Camera();
             
-            _texture = Texture.LoadFromFile("Resources/dirt.png");
+            _texture = Texture.LoadFromFile("Resources/stone.png");
             _texture.Use(TextureUnit.Texture0);
 
             _shader.SetInt("texture0", 0);

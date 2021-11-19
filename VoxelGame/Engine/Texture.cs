@@ -5,7 +5,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
-namespace VoxelGame
+namespace VoxelGame.Engine
 {
     public class Texture
     {

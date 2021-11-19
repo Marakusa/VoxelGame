@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-namespace VoxelGame
+namespace VoxelGame.Engine
 {
     public class Camera
     {

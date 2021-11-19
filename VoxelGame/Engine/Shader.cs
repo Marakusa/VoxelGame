@@ -5,7 +5,7 @@ using System.Text;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-namespace VoxelGame
+namespace VoxelGame.Engine
 {
     public sealed class Shader
     {
