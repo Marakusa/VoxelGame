@@ -31,7 +31,7 @@ namespace VoxelGame.Game
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
-                return new(0, 0, 0, 0);
+                return new(0, 0, 1, 1);
             }
         }
 
