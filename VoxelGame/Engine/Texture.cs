@@ -22,11 +22,13 @@ namespace VoxelGame.Engine
             image.Mutate(x => x.Flip(FlipMode.Vertical));
 
             var pixels = new List<byte>(4 * image.Width * image.Height);
-            
-            for (int y = 0; y < image.Height; y++) {
+
+            for (int y = 0; y < image.Height; y++)
+            {
                 var row = image.GetPixelRowSpan(y);
 
-                for (int x = 0; x < image.Width; x++) {
+                for (int x = 0; x < image.Width; x++)
+                {
                     pixels.Add(row[x].R);
                     pixels.Add(row[x].G);
                     pixels.Add(row[x].B);
@@ -45,12 +47,14 @@ namespace VoxelGame.Engine
                 pixels.ToArray());
 
             image.Dispose();
-            
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
 
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int) TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int) TextureWrapMode.Repeat);
+
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter,
+                (int) TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
+                (int) TextureMagFilter.Nearest);
 
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 

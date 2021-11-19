@@ -1,4 +1,5 @@
 ﻿using System;
+using VoxelGame.Game;
 
 namespace VoxelGame
 {
@@ -8,8 +9,11 @@ namespace VoxelGame
         {
             Console.WriteLine("Voxel Game by Markus Kannisto");
 
-            using Engine.Game game = new(1360, 786, "Voxel Game");
-            game.Run();
+            TextureManager textureManager = new();
+            textureManager.GenerateTextureAtlas();
+            
+            //using Engine.Game game = new(1360, 786, "Voxel Game");
+            //game.Run();
         }
     }
 }
