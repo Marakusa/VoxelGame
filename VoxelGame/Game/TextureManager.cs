@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using SixLabors.ImageSharp;
@@ -8,11 +9,33 @@ namespace VoxelGame.Game
 {
     public class TextureManager
     {
+        public static TextureManager Instance;
+        
         private const int AtlasSize = 16;
         private Image<Rgba32> _textureAtlas = new(16 * AtlasSize, 16 * AtlasSize);
         private Dictionary<string, float[]> _textures = new();
 
-        public void GenerateTextureAtlas()
+        public TextureManager()
+        {
+            Instance = this;
+            GenerateTextureAtlas();
+        }
+        
+        public static UVTransform GetTexture(string name)
+        {
+            try
+            {
+                var texture = Instance._textures[name];
+                return new(texture[0], texture[1], texture[2], texture[3]);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return new(0, 0, 0, 0);
+            }
+        }
+
+        private void GenerateTextureAtlas()
         {
             _textures = new();
             _textureAtlas = new(16 * AtlasSize, 16 * AtlasSize);
@@ -40,7 +63,7 @@ namespace VoxelGame.Game
                         }
                     }
                     
-                    _textures.Add(Path.GetFileNameWithoutExtension(textureFile), new [] { indexX / 16f, indexY / 16f, (indexX + 1f) / 16f, (indexY + 1f) / 16f });
+                    _textures.Add(Path.GetFileNameWithoutExtension(textureFile), new [] { indexX / 16f, indexY / 16f, (indexX + 1) / 16f, (indexY + 1) / 16f });
 
                     indexX++;
 
@@ -52,8 +75,24 @@ namespace VoxelGame.Game
                 }
             }
 
-            _textureAtlas.Mutate(x => x.Flip(FlipMode.Vertical));
+            _textureAtlas.Mutate(x => x.Flip(FlipMode.Horizontal));
             _textureAtlas.Save("Resources/atlas.png");
+        }
+    }
+
+    public class UVTransform
+    {
+        public float UvX;
+        public float UvY;
+        public float UvW;
+        public float UvH;
+
+        public UVTransform(float x, float y, float w, float h)
+        {
+            UvX = x;
+            UvY = y;
+            UvW = w;
+            UvH = h;
         }
     }
 }

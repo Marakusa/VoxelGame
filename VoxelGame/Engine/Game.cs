@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -32,48 +34,8 @@ namespace VoxelGame.Engine
 
         private int _rowLength = 5;
         
-        private float[] _vertices =
-        {
-            // x     y     z    Texture(x, y)
-            0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-            0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-            1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-            1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-            1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-            
-            0.0f, 1.0f, -1.0f, 0.0f, 1.0f,
-            0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-            0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 1.0f, -1.0f, 0.0f, 1.0f,
-            
-            1.0f, 1.0f, -1.0f, 0.0f, 1.0f,
-            1.0f, 0.0f, -1.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
-            0.0f, 1.0f, -1.0f, 1.0f, 1.0f,
-            0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
-            1.0f, 1.0f, -1.0f, 0.0f, 1.0f,
-            
-            /*
-            0.5f,  0.5f,  0.0f, 1.0f, 1.0f,
-            0.5f,  -0.5f, 0.0f, 1.0f, 0.0f,
-            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-            0.5f,  0.5f,  0.0f, 1.0f, 1.0f,
-            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-            -0.5f, 0.5f,  0.0f, 0.0f, 1.0f,*/
-        };
-
-        private float[] _indices =
-        {
-            // x     y     z    Texture(x, y)
-            0, 1, 2,
-            2, 3, 0,
-            /*0.5f,  0.5f,  0.0f, 1.0f, 1.0f,
-            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-            -0.5f, 0.5f,  0.0f, 0.0f, 1.0f,*/
-        };
+        private List<float> _vertices = new();
+        private List<int> _indices = new();
         
         private Texture _texture;
         
@@ -87,10 +49,31 @@ namespace VoxelGame.Engine
 
             PlayerCamera = new Camera();
             
-            _texture = Texture.LoadFromFile("Resources/stone.png");
+            _texture = Texture.LoadFromFile("Resources/atlas.png");
             _texture.Use(TextureUnit.Texture0);
 
             _shader.SetInt("texture0", 0);
+
+            /*Chunk chunk = new();
+            chunk.Generated += (sender, vertices, indices) =>
+            {
+                _vertices = vertices.ToList();
+                _indices = indices.ToList();
+            };*/
+
+            _vertices = new List<float>(new[]
+            {
+                // x    y    z    Texture(x, y)
+                0.0f, 1.0f, 0.0f, 0.0f, 1f - 1.0f / 16f,
+                1.0f, 0.0f, 0.0f, 1.0f / 16f, 0.0f,
+                0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+                1.0f, 1.0f, 0.0f, 1.0f / 16f, 1f - 1.0f / 16f,
+            });
+            _indices = new List<int>(new[]
+            {
+                0, 1, 2,
+                0, 3, 1
+            });
             
             base.OnLoad();
         }
@@ -130,11 +113,11 @@ namespace VoxelGame.Engine
             _vertexBufferObject = GL.GenBuffer();
             GL.BindVertexArray(_vertexArrayObject);
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Count * sizeof(float), _vertices.ToArray(), BufferUsageHint.StaticDraw);
             
             _indicesBufferObject = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indicesBufferObject);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(float), _indices, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Count * sizeof(int), _indices.ToArray(), BufferUsageHint.StaticDraw);
             
             var positionLocation = GL.GetAttribLocation(_shader.Handle, "position");
             GL.EnableVertexAttribArray(positionLocation);
@@ -148,16 +131,15 @@ namespace VoxelGame.Engine
             //GL.EnableVertexAttribArray(colorLocation);
             //GL.VertexAttribPointer(colorLocation, 4, VertexAttribPointerType.Float, false, _rowLength * sizeof(float), 3 * sizeof(float));
 
-            //GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, _vertices.Length / _rowLength);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, _vertices.Count / _rowLength);
+            GL.DrawElements(PrimitiveType.Triangles, _indices.Count, DrawElementsType.UnsignedInt, 0);
             
             GL.DeleteVertexArray(_vertexArrayObject);
             GL.DeleteBuffer(_vertexBufferObject);
             GL.DeleteBuffer(_indicesBufferObject);
-            //GL.DeleteBuffer(_elementBufferObject);
             GL.BindVertexArray(0);
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            //GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
             GL.UseProgram(0);
         }
 

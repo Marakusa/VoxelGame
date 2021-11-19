@@ -37,7 +37,7 @@ namespace VoxelGame.Game
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"WARN: {ex}");
+                Console.WriteLine(ex);
                 return Instance._nullBlock;
             }
         }

@@ -10,10 +10,9 @@ namespace VoxelGame
             Console.WriteLine("Voxel Game by Markus Kannisto");
 
             TextureManager textureManager = new();
-            textureManager.GenerateTextureAtlas();
             
-            //using Engine.Game game = new(1360, 786, "Voxel Game");
-            //game.Run();
+            using Engine.Game game = new(1360, 786, "Voxel Game");
+            game.Run();
         }
     }
 }

@@ -67,8 +67,6 @@ namespace VoxelGame.Engine
             {
                 Position -= Up * Speed * (float)e.Time; //Down
             }
-            
-            System.Console.WriteLine(Position.ToString());
         }
     }
 }
