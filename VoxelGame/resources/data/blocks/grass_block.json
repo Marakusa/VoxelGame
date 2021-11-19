@@ -1,0 +1,12 @@
+{
+  "id": "grass_block",
+  "name": "Grass Block",
+  "max_stack": 100,
+  "transparent": false,
+  "texture": [
+    "grass_block_side",
+    "grass_block",
+    "dirt"
+  ],
+  "camera_relative": false
+}

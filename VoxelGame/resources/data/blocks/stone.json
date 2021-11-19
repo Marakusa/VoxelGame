@@ -1,0 +1,10 @@
+{
+  "id": "stone",
+  "name": "Stone",
+  "max_stack": 100,
+  "transparent": false,
+  "texture": [
+    "stone"
+  ],
+  "camera_relative": false
+}

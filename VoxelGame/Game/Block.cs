@@ -26,6 +26,50 @@ namespace VoxelGame.Game
             Texture = texture;
             IsRotationCameraRelative = isRotationCameraRelative;
         }
+
+        public Block(LoadedBlock loadedBlock)
+        {
+            BlockId = loadedBlock.id;
+            BlockName = loadedBlock.name;
+            MaxStack = loadedBlock.max_stack;
+            IsTransparent = loadedBlock.transparent;
+            IsRotationCameraRelative = loadedBlock.camera_relative;
+
+            switch (loadedBlock.texture.Length)
+            {
+                case 0:
+                    Texture = new("null");
+                    break;
+                case 1 or 2:
+                    Texture = new(loadedBlock.texture[0]);
+                    break;
+                case 3:
+                    Texture = new(
+                        loadedBlock.texture[0], 
+                        loadedBlock.texture[1], 
+                        loadedBlock.texture[2]);
+                    break;
+                case 4 or 5:
+                    Texture = new(
+                        loadedBlock.texture[0], 
+                        loadedBlock.texture[1], 
+                        loadedBlock.texture[2], 
+                        loadedBlock.texture[3]);
+                    break;
+                case 6:
+                    Texture = new(
+                        loadedBlock.texture[0], 
+                        loadedBlock.texture[1], 
+                        loadedBlock.texture[2], 
+                        loadedBlock.texture[3], 
+                        loadedBlock.texture[4], 
+                        loadedBlock.texture[5]);
+                    break;
+                default:
+                    Texture = new("null");
+                    break;
+            }
+        }
     }
 
     public class BlockTexture
@@ -78,14 +122,14 @@ namespace VoxelGame.Game
             BackTexture = uvSides;
         }
 
-        public BlockTexture(string top, string bottom, string front, string back, string left, string right)
+        public BlockTexture(string top, string bottom, string front, string back, string right, string left)
         {
             UVTransform uvTop = TextureManager.GetTexture(top);
             UVTransform uvBottom = TextureManager.GetTexture(bottom);
             UVTransform uvFront = TextureManager.GetTexture(front);
             UVTransform uvBack = TextureManager.GetTexture(back);
-            UVTransform uvLeft = TextureManager.GetTexture(left);
             UVTransform uvRight = TextureManager.GetTexture(right);
+            UVTransform uvLeft = TextureManager.GetTexture(left);
 
             TopTexture = uvTop;
             BottomTexture = uvBottom;

@@ -1,0 +1,10 @@
+{
+  "id": "debug",
+  "name": "Debug Block",
+  "max_stack": 100,
+  "transparent": false,
+  "texture": [
+    "debug"
+  ],
+  "camera_relative": true
+}

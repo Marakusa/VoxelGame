@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL4;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace VoxelGame.Engine
@@ -18,7 +19,7 @@ namespace VoxelGame.Engine
             GL.BindTexture(TextureTarget.Texture2D, handle);
 
             Image<Rgba32> image = Image.Load<Rgba32>(path);
-
+            
             var pixels = new List<byte>(4 * image.Width * image.Height);
 
             for (int y = 0; y < image.Height; y++)

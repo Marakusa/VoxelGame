@@ -23,16 +23,13 @@ namespace VoxelGame.Game
 
         public static UVTransform GetTexture(string name)
         {
-            try
+            if (Instance._textures.ContainsKey(name))
             {
                 var texture = Instance._textures[name];
                 return new(texture[0], texture[1], texture[2], texture[3]);
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-                return new(0, 0, 1, 1);
-            }
+            
+            return new(0, 0, 1, 1);
         }
 
         private void GenerateTextureAtlas()
@@ -43,7 +40,7 @@ namespace VoxelGame.Game
             int indexX = 0;
             int indexY = 0;
 
-            foreach (var textureFile in Directory.GetFiles("resources/blocks/"))
+            foreach (var textureFile in Directory.GetFiles("resources/textures/blocks/"))
             {
                 if (Path.GetExtension(textureFile) == ".png")
                 {

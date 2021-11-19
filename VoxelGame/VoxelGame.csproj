@@ -8,20 +8,12 @@
     <ItemGroup>
         <PackageReference Include="OpenTK" Version="4.6.7" />
         <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     </ItemGroup>
 
     <ItemGroup>
-        <Content Include="resources\*.*">
+        <Content Include="resources\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="resources\*\*.*">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="resources\blocks\dirt.png">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="resources\blocks\stone.png">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
 

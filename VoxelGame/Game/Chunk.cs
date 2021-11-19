@@ -6,7 +6,7 @@ namespace VoxelGame.Game
 {
     public class Chunk
     {
-        private const int Width = 2, Height = 1;
+        private const int Width = 16, Height = 256;
 
         private Block[,,] _blocks;
 
@@ -24,21 +24,22 @@ namespace VoxelGame.Game
 
         public void Generate()
         {
+            Random r = new();
+            
             for (int x = 0; x < Width; x++)
             {
                 for (int y = 0; y < Height; y++)
                 {
                     for (int z = 0; z < Width; z++)
                     {
-                        _blocks[x, y, z] = Blocks.Get("dirt");
+                        if (y < 10)
+                            _blocks[x, y, z] = Blocks.Get("stone");
                     }
                 }
             }
 
             GenerateMesh();
         }
-
-        private int _indicesIndex = 0;
 
         private void GenerateMesh()
         {
@@ -48,25 +49,48 @@ namespace VoxelGame.Game
                 {
                     for (int z = 0; z < Width; z++)
                     {
-                        //if (!HasBlock(x, y, z + 1))
-                        GenerateMeshFront(x, y, z);
-                        //if (!HasBlock(x, y, z - 1))
-                        GenerateMeshBack(x, y, z);
+                        if (_blocks[x, y, z] != null && _blocks[x, y, z].BlockId != "air")
+                        {
+                            if (!HasBlock(x, y, z + 1)) GenerateMeshBack(x, y, z);
+                            if (!HasBlock(x, y, z - 1)) GenerateMeshFront(x, y, z);
+                            if (!HasBlock(x + 1, y, z)) GenerateMeshRight(x, y, z);
+                            if (!HasBlock(x - 1, y, z)) GenerateMeshLeft(x, y, z);
+                            if (!HasBlock(x, y + 1, z)) GenerateMeshTop(x, y, z);
+                            if (!HasBlock(x, y - 1, z)) GenerateMeshBottom(x, y, z);
+                        }
                     }
                 }
             }
-
+            
             Generated?.Invoke(this, _vertices.ToArray(), _indices.ToArray());
         }
 
         private bool HasBlock(int x, int y, int z)
         {
             if (x >= 0 && y >= 0 && z >= 0 && x < Width && y < Height && z < Width)
-                return _blocks[x, y, z] != null;
+                return _blocks[x, y, z] != null && _blocks[x, y, z].BlockId != "air";
             else
                 return false;
         }
-        
+
+        private int _indicesIndex = 0;
+        private void AddMesh(Vector3[] vertices, Vector2[] uvs, int[] indices)
+        {
+            int i = 0;
+            foreach (var vertex in vertices)
+            {
+                _vertices.AddRange(new[] { vertex.X, vertex.Y, vertex.Z, uvs[i].X, uvs[i].Y });
+                i++;
+            }
+
+            foreach (var index in indices)
+            {
+                _indices.Add(index + _indicesIndex);
+            }
+
+            _indicesIndex += 4;
+        }
+
         private void GenerateMeshFront(int x, int y, int z)
         {
             UVTransform transform = _blocks[x, y, z].Texture.FrontTexture;
@@ -76,48 +100,188 @@ namespace VoxelGame.Game
             float uw = transform.UvW;
             float uh = transform.UvH;
 
-            _vertices.AddRange(new[]
+            Vector3[] points =
             {
-                // x           y           z           Texture(x, y)
-                1.0f + x,   1.0f + y,   0.0f + z,      ux + uw,   uy + uh,
-                0.0f + x,   0.0f + y,   0.0f + z,      ux,        uy,
-                1.0f + x,   0.0f + y,   0.0f + z,      ux + uw,   uy,
-                0.0f + x,   1.0f + y,   0.0f + z,      ux,        uy + uh
-            });
-            _indices.AddRange(new[]
+                new(0.0f + x, 1.0f + y, 0.0f + z),
+                new(1.0f + x, 0.0f + y, 0.0f + z),
+                new(0.0f + x, 0.0f + y, 0.0f + z),
+                new(1.0f + x, 1.0f + y, 0.0f + z)
+            };
+            Vector2[] uvs =
             {
-                0 + _indicesIndex, 1 + _indicesIndex, 2 + _indicesIndex,
-                0 + _indicesIndex, 3 + _indicesIndex, 1 + _indicesIndex
-            });
+                new(ux + uw, uy),
+                new(ux, uy + uh),
+                new(ux + uw, uy + uh),
+                new(ux, uy)
+            };
+            int[] indices =
+            {
+                0, 1, 2,
+                0, 3, 1
+            };
 
-            _indicesIndex += 4;
+            AddMesh(points, uvs, indices);
         }
         private void GenerateMeshBack(int x, int y, int z)
         {
-            UVTransform transform = _blocks[x, y, z].Texture.FrontTexture;
+            UVTransform transform = _blocks[x, y, z].Texture.BackTexture;
 
             float ux = transform.UvX;
             float uy = transform.UvY;
             float uw = transform.UvW;
             float uh = transform.UvH;
 
-            z -= 1;
+            z += 1;
 
-            _vertices.AddRange(new[]
+            Vector3[] points =
             {
-                // x           y           z           Texture(x, y)
-                1.0f + x,   1.0f + y,   0.0f + z,      ux + uw,   uy + uh,
-                0.0f + x,   0.0f + y,   0.0f + z,      ux,        uy,
-                1.0f + x,   0.0f + y,   0.0f + z,      ux + uw,   uy,
-                0.0f + x,   1.0f + y,   0.0f + z,      ux,        uy + uh
-            });
-            _indices.AddRange(new[]
+                new(0.0f + x, 1.0f + y, 0.0f + z),
+                new(1.0f + x, 0.0f + y, 0.0f + z),
+                new(0.0f + x, 0.0f + y, 0.0f + z),
+                new(1.0f + x, 1.0f + y, 0.0f + z)
+            };
+            Vector2[] uvs =
             {
-                3 + _indicesIndex, 2 + _indicesIndex, 1 + _indicesIndex,
-                3 + _indicesIndex, 0 + _indicesIndex, 2 + _indicesIndex
-            });
+                new(ux, uy),
+                new(ux + uw, uy + uh),
+                new(ux, uy + uh),
+                new(ux + uw, uy)
+            };
+            int[] indices =
+            {
+                3, 2, 1,
+                3, 0, 2
+            };
 
-            _indicesIndex += 4;
+            AddMesh(points, uvs, indices);
+        }
+        private void GenerateMeshRight(int x, int y, int z)
+        {
+            UVTransform transform = _blocks[x, y, z].Texture.RightTexture;
+
+            float ux = transform.UvX;
+            float uy = transform.UvY;
+            float uw = transform.UvW;
+            float uh = transform.UvH;
+
+            x += 1;
+
+            Vector3[] points =
+            {
+                new(0.0f + x, 1.0f + y, 1.0f + z),
+                new(0.0f + x, 0.0f + y, 0.0f + z),
+                new(0.0f + x, 0.0f + y, 1.0f + z),
+                new(0.0f + x, 1.0f + y, 0.0f + z)
+            };
+            Vector2[] uvs =
+            {
+                new(ux, uy),
+                new(ux + uw, uy + uh),
+                new(ux, uy + uh),
+                new(ux + uw, uy),
+            };
+            int[] indices =
+            {
+                3, 2, 1,
+                3, 0, 2
+            };
+
+            AddMesh(points, uvs, indices);
+        }
+        private void GenerateMeshLeft(int x, int y, int z)
+        {
+            UVTransform transform = _blocks[x, y, z].Texture.LeftTexture;
+
+            float ux = transform.UvX;
+            float uy = transform.UvY;
+            float uw = transform.UvW;
+            float uh = transform.UvH;
+
+            Vector3[] points =
+            {
+                new(0.0f + x, 1.0f + y, 1.0f + z),
+                new(0.0f + x, 0.0f + y, 0.0f + z),
+                new(0.0f + x, 0.0f + y, 1.0f + z),
+                new(0.0f + x, 1.0f + y, 0.0f + z)
+            };
+            Vector2[] uvs =
+            {
+                new(ux + uw, uy),
+                new(ux, uy + uh),
+                new(ux + uw, uy + uh),
+                new(ux, uy),
+            };
+            int[] indices =
+            {
+                0, 1, 2,
+                0, 3, 1
+            };
+
+            AddMesh(points, uvs, indices);
+        }
+        private void GenerateMeshTop(int x, int y, int z)
+        {
+            UVTransform transform = _blocks[x, y, z].Texture.TopTexture;
+
+            float ux = transform.UvX;
+            float uy = transform.UvY;
+            float uw = transform.UvW;
+            float uh = transform.UvH;
+
+            y += 1;
+
+            Vector3[] points =
+            {
+                new(0.0f + x, 0.0f + y, 1.0f + z),
+                new(1.0f + x, 0.0f + y, 0.0f + z),
+                new(0.0f + x, 0.0f + y, 0.0f + z),
+                new(1.0f + x, 0.0f + y, 1.0f + z)
+            };
+            Vector2[] uvs =
+            {
+                new(ux + uw, uy),
+                new(ux, uy + uh),
+                new(ux + uw, uy + uh),
+                new(ux, uy),
+            };
+            int[] indices =
+            {
+                0, 1, 2,
+                0, 3, 1
+            };
+
+            AddMesh(points, uvs, indices);
+        }
+        private void GenerateMeshBottom(int x, int y, int z)
+        {
+            UVTransform transform = _blocks[x, y, z].Texture.BottomTexture;
+
+            float ux = transform.UvX;
+            float uy = transform.UvY;
+            float uw = transform.UvW;
+            float uh = transform.UvH;
+
+            Vector3[] points =
+            {
+                new(0.0f + x, 0.0f + y, 1.0f + z),
+                new(1.0f + x, 0.0f + y, 0.0f + z),
+                new(0.0f + x, 0.0f + y, 0.0f + z),
+                new(1.0f + x, 0.0f + y, 1.0f + z)
+            };
+            Vector2[] uvs =
+            {
+                new(ux, uy),
+                new(ux + uw, uy + uh),
+                new(ux, uy + uh),
+                new(ux + uw, uy),
+            };
+            int[] indices =
+            {
+                3, 2, 1,
+                3, 0, 2
+            };
+
+            AddMesh(points, uvs, indices);
         }
     }
 }

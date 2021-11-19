@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using Newtonsoft.Json;
 
 namespace VoxelGame.Game
 {
@@ -8,7 +10,6 @@ namespace VoxelGame.Game
         public static Blocks Instance;
 
         private readonly Dictionary<string, Block> _blocks = new();
-        private readonly Block _nullBlock = new("null", "null", 100, false, new BlockTexture("null"), false);
 
         public Blocks()
         {
@@ -19,14 +20,15 @@ namespace VoxelGame.Game
 
         private void LoadBlocks()
         {
-            Block block = new("dirt",
-                "Dirt",
-                100,
-                false,
-                new("dirt"),
-                false
-            );
-            _blocks.Add(block.BlockId, block);
+            foreach (var dataFile in Directory.GetFiles("resources/data/blocks/"))
+            {
+                if (Path.GetExtension(dataFile) == ".json")
+                {
+                    LoadedBlock loadedBlock = JsonConvert.DeserializeObject<LoadedBlock>(File.ReadAllText(Path.GetFullPath(dataFile)));
+                    Block block = new(loadedBlock);
+                    _blocks.Add(block.BlockId, block);
+                }
+            }
         }
 
         public static Block Get(string name)
@@ -38,8 +40,18 @@ namespace VoxelGame.Game
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
-                return Instance._nullBlock;
+                return null;
             }
         }
+    }
+
+    public class LoadedBlock
+    {
+        public string id;
+        public string name;
+        public int max_stack;
+        public bool transparent;
+        public string[] texture;
+        public bool camera_relative;
     }
 }

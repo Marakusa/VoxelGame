@@ -34,8 +34,8 @@ namespace VoxelGame.Engine
 
         private int _rowLength = 5;
 
-        private float[] _vertices;
-        private int[] _indices;
+        private float[] _vertices = Array.Empty<float>();
+        private int[] _indices = Array.Empty<int>();
 
         private Texture _texture;
 
@@ -63,13 +63,14 @@ namespace VoxelGame.Engine
             chunk.Generate();
 
             GL.Enable(EnableCap.CullFace);
+            GL.Enable(EnableCap.DepthTest);
 
             base.OnLoad();
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
-            GL.Clear(ClearBufferMask.ColorBufferBit);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
             GL.BindVertexArray(_vertexArrayObject);
@@ -116,11 +117,6 @@ namespace VoxelGame.Engine
             GL.EnableVertexAttribArray(texCoordLocation);
             GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, _rowLength * sizeof(float), 3 * sizeof(float));
 
-            //int colorLocation = _shader.GetAttribLocation("aColor");
-            //GL.EnableVertexAttribArray(colorLocation);
-            //GL.VertexAttribPointer(colorLocation, 4, VertexAttribPointerType.Float, false, _rowLength * sizeof(float), 3 * sizeof(float));
-
-            GL.DrawArrays(PrimitiveType.Triangles, 0, _vertices.Length / _rowLength);
             GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
 
             GL.DeleteVertexArray(_vertexArrayObject);
@@ -153,6 +149,11 @@ namespace VoxelGame.Engine
 
             _playerCamera.Movement(input, e);
             _playerCamera.Update();
+
+            CursorVisible = !_playerCamera.IsLocked;
+
+            if (input.IsKeyDown(Keys.Escape))
+                Close();
             
             base.OnUpdateFrame(e);
         }
@@ -175,6 +176,12 @@ namespace VoxelGame.Engine
             _playerCamera.IsLocked = true;
             
             base.OnMouseDown(e);
+        }
+
+        public override void Close()
+        {
+            CursorVisible = true;
+            base.Close();
         }
     }
 }

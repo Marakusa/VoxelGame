@@ -1,0 +1,10 @@
+{
+  "id": "dirt",
+  "name": "Dirt",
+  "max_stack": 100,
+  "transparent": false,
+  "texture": [
+    "dirt"
+  ],
+  "camera_relative": false
+}
