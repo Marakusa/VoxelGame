@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -13,8 +12,7 @@ namespace VoxelGame.Engine
     public class Game : GameWindow
     {
         public Game(int width, int height, string title)
-            : base(
-                new(),
+            : base(new(),
                 new()
                 {
                     Size = new Vector2i(width, height),
