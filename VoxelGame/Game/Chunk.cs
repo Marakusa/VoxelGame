@@ -6,6 +6,8 @@ namespace VoxelGame.Game
 {
     public class Chunk
     {
+        public Vector2 position;
+
         private const int Width = 16, Height = 256;
 
         private Block[,,] _blocks;
@@ -17,23 +19,33 @@ namespace VoxelGame.Game
 
         public event GeneratedHandler Generated;
 
-        public Chunk()
+        public Chunk(int x, int y)
         {
             _blocks = new Block[Width, Height, Width];
+            position = new(x, y);
         }
 
         public void Generate()
         {
-            Random r = new();
+            var noiseData = Noise.GetChunkNoise((int)Math.Round(position.X), (int)Math.Round(position.Y));
             
-            for (int x = 0; x < Width; x++)
+            for (int y = 0; y < Height; y++)
             {
-                for (int y = 0; y < Height; y++)
+                for (int x = 0; x < Width; x++)
                 {
                     for (int z = 0; z < Width; z++)
                     {
-                        if (y < 10)
-                            _blocks[x, y, z] = Blocks.Get("stone");
+                        int noiseHeight = noiseData[x, z];
+
+                        if (noiseHeight >= 0 && noiseHeight < Height)
+                        {
+                            if (y == noiseHeight)
+                                _blocks[x, y, z] = Blocks.Get("grass_block");
+                            else if (y < noiseHeight && y > noiseHeight - 4)
+                                _blocks[x, y, z] = Blocks.Get("dirt");
+                            else if (y <= noiseHeight - 4)
+                                _blocks[x, y, z] = Blocks.Get("stone");
+                        }
                     }
                 }
             }
@@ -67,19 +79,65 @@ namespace VoxelGame.Game
 
         private bool HasBlock(int x, int y, int z)
         {
+            if (y == -1 || y == Height)
+                return false;
+
             if (x >= 0 && y >= 0 && z >= 0 && x < Width && y < Height && z < Width)
                 return _blocks[x, y, z] != null && _blocks[x, y, z].BlockId != "air";
-            else
-                return false;
+            
+            if ((x >= -1 && y >= 0 && z >= -1) || (x <= Width && y < Height && z <= Width))
+            {
+                int noiseY = Noise.GetNoise(x + (int)Math.Round(position.X), z + (int)Math.Round(position.Y));
+                return noiseY >= y;
+            }
+
+            return false;
         }
 
         private int _indicesIndex = 0;
-        private void AddMesh(Vector3[] vertices, Vector2[] uvs, int[] indices)
+        private void AddMesh(Vector3[] vertices, Vector2[] uvs, int[] indices, int x, int y, int z, FaceSide side)
         {
             int i = 0;
             foreach (var vertex in vertices)
             {
-                _vertices.AddRange(new[] { vertex.X, vertex.Y, vertex.Z, uvs[i].X, uvs[i].Y });
+                float lightLevel = 1f;
+
+                if (side == FaceSide.Bottom)
+                    lightLevel -= 0.5f;
+
+                if (side == FaceSide.Top)
+                {
+                    if (HasBlock((int)Math.Round(vertex.X), (int)Math.Round(vertex.Y), (int)Math.Round(vertex.Z)))
+                    {
+                        lightLevel -= 0.25f;
+                    }
+                }
+                else if (side == FaceSide.Front || side == FaceSide.Left)
+                {
+                    if (HasBlock((int)Math.Round(vertex.X), (int)Math.Round(vertex.Y), (int)Math.Round(vertex.Z)))
+                    {
+                        lightLevel -= 0.25f;
+                    }
+                }
+                else if (side == FaceSide.Back || side == FaceSide.Right)
+                {
+                    if (HasBlock((int)Math.Round(vertex.X + 1), (int)Math.Round(vertex.Y), (int)Math.Round(vertex.Z + 1)))
+                    {
+                        lightLevel -= 0.25f;
+                    }
+                }
+
+                lightLevel = Math.Clamp(lightLevel, 0f, 1f);
+
+                _vertices.AddRange(new[]
+                {
+                    vertex.X + (int)Math.Round(position.X), 
+                    vertex.Y, 
+                    vertex.Z + (int)Math.Round(position.Y),
+                    uvs[i].X, 
+                    uvs[i].Y, 
+                    lightLevel
+                });
                 i++;
             }
 
@@ -120,7 +178,7 @@ namespace VoxelGame.Game
                 0, 3, 1
             };
 
-            AddMesh(points, uvs, indices);
+            AddMesh(points, uvs, indices, x, y, z, FaceSide.Front);
         }
         private void GenerateMeshBack(int x, int y, int z)
         {
@@ -153,7 +211,7 @@ namespace VoxelGame.Game
                 3, 0, 2
             };
 
-            AddMesh(points, uvs, indices);
+            AddMesh(points, uvs, indices, x, y, z, FaceSide.Back);
         }
         private void GenerateMeshRight(int x, int y, int z)
         {
@@ -186,7 +244,7 @@ namespace VoxelGame.Game
                 3, 0, 2
             };
 
-            AddMesh(points, uvs, indices);
+            AddMesh(points, uvs, indices, x, y, z, FaceSide.Right);
         }
         private void GenerateMeshLeft(int x, int y, int z)
         {
@@ -217,7 +275,7 @@ namespace VoxelGame.Game
                 0, 3, 1
             };
 
-            AddMesh(points, uvs, indices);
+            AddMesh(points, uvs, indices, x, y, z, FaceSide.Left);
         }
         private void GenerateMeshTop(int x, int y, int z)
         {
@@ -250,7 +308,7 @@ namespace VoxelGame.Game
                 0, 3, 1
             };
 
-            AddMesh(points, uvs, indices);
+            AddMesh(points, uvs, indices, x, y, z, FaceSide.Top);
         }
         private void GenerateMeshBottom(int x, int y, int z)
         {
@@ -281,7 +339,12 @@ namespace VoxelGame.Game
                 3, 0, 2
             };
 
-            AddMesh(points, uvs, indices);
+            AddMesh(points, uvs, indices, x, y, z, FaceSide.Bottom);
         }
+    }
+
+    public enum FaceSide
+    {
+        Top, Bottom, Left, Right, Front, Back
     }
 }

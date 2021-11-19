@@ -31,7 +31,7 @@ namespace VoxelGame.Engine
 
         public Camera()
         {
-            Position = new Vector3(0.5f, 0.5f, -3.0f);
+            Position = new Vector3(8f, 64f, -8f);
             CameraTarget = Position + new Vector3(0.0f, 0.0f, 1.0f);
             CameraDirection = Vector3.Normalize(Position - CameraTarget);
             Front = new Vector3(0.0f, 0.0f, 1.0f);
@@ -44,6 +44,8 @@ namespace VoxelGame.Engine
             Up = Vector3.UnitY;
             CameraRight = Vector3.Normalize(Vector3.Cross(Up, CameraDirection));
             CameraUp = Vector3.Cross(CameraDirection, CameraRight);
+
+            Console.WriteLine(Position.ToString());
         }
 
         public void Look(Vector2 mousePosition)

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -32,7 +31,7 @@ namespace VoxelGame.Engine
         private int _vertexBufferObject;
         private int _indicesBufferObject;
 
-        private int _rowLength = 5;
+        private int _rowLength = 6;
 
         private float[] _vertices = Array.Empty<float>();
         private int[] _indices = Array.Empty<int>();
@@ -41,6 +40,7 @@ namespace VoxelGame.Engine
 
         protected override void OnLoad()
         {
+            Noise noise = new(1f);
             Blocks blocks = new();
 
             _shader = new("resources/shader.vert", "resources/shader.frag");
@@ -54,13 +54,32 @@ namespace VoxelGame.Engine
 
             _shader.SetInt("texture0", 0);
 
-            Chunk chunk = new();
+            List<float> verticesList = new();
+            List<int> indicesList = new();
+            
+            Chunk chunk = new(0, 0);
             chunk.Generated += (sender, vertices, indices) =>
             {
-                _vertices = vertices;
-                _indices = indices;
+                verticesList.AddRange(vertices);
+                indicesList.AddRange(indices);
             };
             chunk.Generate();
+            /*for (int x = 0; x < 3; x++)
+            {
+                for (int y = 0; y < 3; y++)
+                {
+                    Chunk chunk = new(x * 16, y * 16);
+                    chunk.Generated += (sender, vertices, indices) =>
+                    {
+                        verticesList.AddRange(vertices);
+                        indicesList.AddRange(indices);
+                    };
+                    chunk.Generate();
+                }
+            }*/
+            
+            _vertices = verticesList.ToArray();
+            _indices = indicesList.ToArray();
 
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.DepthTest);
@@ -72,8 +91,6 @@ namespace VoxelGame.Engine
         {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-            GL.BindVertexArray(_vertexArrayObject);
             GL.UseProgram(_shader.Handle);
 
             float x = Size.X;
@@ -104,11 +121,11 @@ namespace VoxelGame.Engine
             GL.BindVertexArray(_vertexArrayObject);
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
             GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
-
-            _indicesBufferObject = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indicesBufferObject);
+                
+            int _indicesBufferObjects = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indicesBufferObjects);
             GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(int), _indices, BufferUsageHint.StaticDraw);
-
+            
             var positionLocation = GL.GetAttribLocation(_shader.Handle, "position");
             GL.EnableVertexAttribArray(positionLocation);
             GL.VertexAttribPointer(positionLocation, 3, VertexAttribPointerType.Float, false, _rowLength * sizeof(float), 0);
@@ -116,6 +133,10 @@ namespace VoxelGame.Engine
             int texCoordLocation = _shader.GetAttribLocation("aTexCoord");
             GL.EnableVertexAttribArray(texCoordLocation);
             GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, _rowLength * sizeof(float), 3 * sizeof(float));
+
+            int colorMultiplier = _shader.GetAttribLocation("aColorMultiplier");
+            GL.EnableVertexAttribArray(colorMultiplier);
+            GL.VertexAttribPointer(colorMultiplier, 1, VertexAttribPointerType.Float, false, _rowLength * sizeof(float), 5 * sizeof(float));
 
             GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
 
@@ -183,5 +204,11 @@ namespace VoxelGame.Engine
             CursorVisible = true;
             base.Close();
         }
+    }
+
+    public class MeshObject
+    {
+        public float[] Vertices = Array.Empty<float>();
+        public int[] Indices = Array.Empty<int>();
     }
 }
