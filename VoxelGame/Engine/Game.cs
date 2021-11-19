@@ -59,20 +59,6 @@ namespace VoxelGame.Engine
                 _indices = indices.ToList();
             };*/
 
-            _vertices = new List<float>(new[]
-            {
-                // x    y    z    Texture(x, y)
-                0.0f, 1.0f, 0.0f, 0.0f, 1f - 1.0f / 16f,
-                1.0f, 0.0f, 0.0f, 1.0f / 16f, 0.0f,
-                0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                1.0f, 1.0f, 0.0f, 1.0f / 16f, 1f - 1.0f / 16f,
-            });
-            _indices = new List<int>(new[]
-            {
-                0, 1, 2,
-                0, 3, 1
-            });
-            
             base.OnLoad();
         }
         

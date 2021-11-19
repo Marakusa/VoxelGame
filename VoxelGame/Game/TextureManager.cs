@@ -63,6 +63,10 @@ namespace VoxelGame.Game
                         }
                     }
                     
+                    // TODO
+                    int i = 8;
+                    int j = 0;
+                    float divider = 1f / 16.0f;
                     _textures.Add(Path.GetFileNameWithoutExtension(textureFile), new [] { indexX / 16f, indexY / 16f, (indexX + 1) / 16f, (indexY + 1) / 16f });
 
                     indexX++;
@@ -75,7 +79,6 @@ namespace VoxelGame.Game
                 }
             }
 
-            _textureAtlas.Mutate(x => x.Flip(FlipMode.Horizontal));
             _textureAtlas.Save("resources/atlas.png");
         }
     }

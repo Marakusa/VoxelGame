@@ -12,7 +12,10 @@
 
     <ItemGroup>
         <Content Include="resources\*.*">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="resources\*\*.*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <Content Include="resources\blocks\dirt.png">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
