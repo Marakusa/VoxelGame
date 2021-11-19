@@ -4,6 +4,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using VoxelGame.Game;
 
 namespace VoxelGame.Engine
 {
@@ -78,6 +79,8 @@ namespace VoxelGame.Engine
         
         protected override void OnLoad()
         {
+            var blocks = new Blocks();
+            
             _shader = new("Resources/shader.vert", "Resources/shader.frag");
             
             GL.ClearColor(0.4f, 0.6f, 1.0f, 0.0f);
