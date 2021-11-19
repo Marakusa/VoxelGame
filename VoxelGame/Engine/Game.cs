@@ -41,13 +41,13 @@ namespace VoxelGame.Engine
         {
             var blocks = new Blocks();
             
-            _shader = new("Resources/shader.vert", "Resources/shader.frag");
+            _shader = new("resources/shader.vert", "resources/shader.frag");
             
             GL.ClearColor(0.4f, 0.6f, 1.0f, 0.0f);
 
             PlayerCamera = new Camera();
             
-            _texture = Texture.LoadFromFile("Resources/atlas.png");
+            _texture = Texture.LoadFromFile("resources/atlas.png");
             _texture.Use(TextureUnit.Texture0);
 
             _shader.SetInt("texture0", 0);
