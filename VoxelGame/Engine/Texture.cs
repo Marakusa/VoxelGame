@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL4;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace VoxelGame.Engine
@@ -41,19 +40,19 @@ namespace VoxelGame.Engine
                 image.Width,
                 image.Height,
                 0,
-                PixelFormat.Bgra,
+                PixelFormat.Rgba,
                 PixelType.UnsignedByte,
                 pixels.ToArray());
 
             image.Dispose();
 
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int) TextureWrapMode.Repeat);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int) TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
 
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter,
-                (int) TextureMinFilter.Nearest);
+                (int)TextureMinFilter.Nearest);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
-                (int) TextureMagFilter.Nearest);
+                (int)TextureMagFilter.Nearest);
 
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 
@@ -65,10 +64,6 @@ namespace VoxelGame.Engine
             Handle = glHandle;
         }
 
-        // Activate texture
-        // Multiple textures can be bound, if your shader needs more than just one.
-        // If you want to do that, use GL.ActiveTexture to set which slot GL.BindTexture binds to.
-        // The OpenGL standard requires that there be at least 16, but there can be more depending on your graphics card.
         public void Use(TextureUnit unit)
         {
             GL.ActiveTexture(unit);

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -17,51 +18,55 @@ namespace VoxelGame.Engine
                 {
                     Size = new Vector2i(width, height),
                     Title = title,
-                    APIVersion = new Version(4, 6),
+                    APIVersion = new(4, 6),
                     API = ContextAPI.OpenGL,
                     NumberOfSamples = 8,
                 })
-        { }
+        {
+        }
 
-        public Camera PlayerCamera;
-        
+        private Camera _playerCamera;
+
         private Shader _shader;
         private int _vertexArrayObject;
         private int _vertexBufferObject;
         private int _indicesBufferObject;
 
         private int _rowLength = 5;
-        
-        private List<float> _vertices = new();
-        private List<int> _indices = new();
-        
+
+        private float[] _vertices;
+        private int[] _indices;
+
         private Texture _texture;
-        
+
         protected override void OnLoad()
         {
-            var blocks = new Blocks();
-            
+            Blocks blocks = new();
+
             _shader = new("resources/shader.vert", "resources/shader.frag");
-            
+
             GL.ClearColor(0.4f, 0.6f, 1.0f, 0.0f);
 
-            PlayerCamera = new Camera();
-            
+            _playerCamera = new();
+
             _texture = Texture.LoadFromFile("resources/atlas.png");
             _texture.Use(TextureUnit.Texture0);
 
             _shader.SetInt("texture0", 0);
 
-            /*Chunk chunk = new();
+            Chunk chunk = new();
             chunk.Generated += (sender, vertices, indices) =>
             {
-                _vertices = vertices.ToList();
-                _indices = indices.ToList();
-            };*/
+                _vertices = vertices;
+                _indices = indices;
+            };
+            chunk.Generate();
+
+            GL.Enable(EnableCap.CullFace);
 
             base.OnLoad();
         }
-        
+
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             GL.Clear(ClearBufferMask.ColorBufferBit);
@@ -72,12 +77,12 @@ namespace VoxelGame.Engine
 
             float x = Size.X;
             float y = Size.Y;
-            
+
             if (x > 0f && y > 0f)
             {
                 var model = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(0.0f));
-                var view = Matrix4.LookAt(PlayerCamera.Position, PlayerCamera.Position + PlayerCamera.Front, PlayerCamera.CameraUp);
-                var projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(PlayerCamera.FieldOfView), x / y, 0.1f, 100.0f);
+                var view = Matrix4.LookAt(_playerCamera.Position, _playerCamera.Position + _playerCamera.Front, _playerCamera.CameraUp);
+                var projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(Camera.FieldOfView), x / y, 0.1f, 100.0f);
 
                 _shader.SetMatrix4("model", model);
                 _shader.SetMatrix4("view", view);
@@ -85,9 +90,9 @@ namespace VoxelGame.Engine
             }
 
             Render();
-            
+
             Context.SwapBuffers();
-            
+
             base.OnRenderFrame(e);
         }
 
@@ -97,16 +102,16 @@ namespace VoxelGame.Engine
             _vertexBufferObject = GL.GenBuffer();
             GL.BindVertexArray(_vertexArrayObject);
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Count * sizeof(float), _vertices.ToArray(), BufferUsageHint.StaticDraw);
-            
+            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+
             _indicesBufferObject = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indicesBufferObject);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Count * sizeof(int), _indices.ToArray(), BufferUsageHint.StaticDraw);
-            
+            GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(int), _indices, BufferUsageHint.StaticDraw);
+
             var positionLocation = GL.GetAttribLocation(_shader.Handle, "position");
             GL.EnableVertexAttribArray(positionLocation);
             GL.VertexAttribPointer(positionLocation, 3, VertexAttribPointerType.Float, false, _rowLength * sizeof(float), 0);
-            
+
             int texCoordLocation = _shader.GetAttribLocation("aTexCoord");
             GL.EnableVertexAttribArray(texCoordLocation);
             GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, _rowLength * sizeof(float), 3 * sizeof(float));
@@ -115,9 +120,9 @@ namespace VoxelGame.Engine
             //GL.EnableVertexAttribArray(colorLocation);
             //GL.VertexAttribPointer(colorLocation, 4, VertexAttribPointerType.Float, false, _rowLength * sizeof(float), 3 * sizeof(float));
 
-            GL.DrawArrays(PrimitiveType.Triangles, 0, _vertices.Count / _rowLength);
-            GL.DrawElements(PrimitiveType.Triangles, _indices.Count, DrawElementsType.UnsignedInt, 0);
-            
+            GL.DrawArrays(PrimitiveType.Triangles, 0, _vertices.Length / _rowLength);
+            GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
+
             GL.DeleteVertexArray(_vertexArrayObject);
             GL.DeleteBuffer(_vertexBufferObject);
             GL.DeleteBuffer(_indicesBufferObject);
@@ -130,10 +135,10 @@ namespace VoxelGame.Engine
         protected override void OnResize(ResizeEventArgs e)
         {
             GL.Viewport(0, 0, Size.X, Size.Y);
-            
+
             base.OnResize(e);
         }
-        
+
         protected override void OnUnload()
         {
             _shader.Dispose();
@@ -146,10 +151,30 @@ namespace VoxelGame.Engine
 
             KeyboardState input = KeyboardState.GetSnapshot();
 
-            PlayerCamera.Movement(input, e);
-            PlayerCamera.Update();
+            _playerCamera.Movement(input, e);
+            _playerCamera.Update();
             
             base.OnUpdateFrame(e);
+        }
+
+        protected override void OnMouseMove(MouseMoveEventArgs e)
+        {
+            if (_playerCamera.IsLocked)
+            {
+                _playerCamera.Look(MousePosition);
+                MousePosition = new(Size.X / 2f, Size.Y / 2f);
+                _playerCamera.LastMousePosition = new(Size.X / 2f, Size.Y / 2f);
+                _playerCamera.CurrentMousePosition = new(Size.X / 2f, Size.Y / 2f);
+            }
+            
+            base.OnMouseMove(e);
+        }
+
+        protected override void OnMouseDown(MouseButtonEventArgs e)
+        {
+            _playerCamera.IsLocked = true;
+            
+            base.OnMouseDown(e);
         }
     }
 }

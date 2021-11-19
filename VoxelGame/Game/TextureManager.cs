@@ -10,7 +10,7 @@ namespace VoxelGame.Game
     public class TextureManager
     {
         public static TextureManager Instance;
-        
+
         private const int AtlasSize = 16;
         private Image<Rgba32> _textureAtlas = new(16 * AtlasSize, 16 * AtlasSize);
         private Dictionary<string, float[]> _textures = new();
@@ -20,7 +20,7 @@ namespace VoxelGame.Game
             Instance = this;
             GenerateTextureAtlas();
         }
-        
+
         public static UVTransform GetTexture(string name)
         {
             try
@@ -62,12 +62,15 @@ namespace VoxelGame.Game
                             _textureAtlas[x + indexX * 16, y + indexY * 16] = new Rgba32(r, g, b, a);
                         }
                     }
-                    
-                    // TODO
-                    int i = 8;
-                    int j = 0;
-                    float divider = 1f / 16.0f;
-                    _textures.Add(Path.GetFileNameWithoutExtension(textureFile), new [] { indexX / 16f, indexY / 16f, (indexX + 1) / 16f, (indexY + 1) / 16f });
+
+                    const float divider = 1f / 16.0f;
+                    _textures.Add(Path.GetFileNameWithoutExtension(textureFile), new[]
+                    {
+                        indexX * divider,
+                        indexY * divider,
+                        divider,
+                        divider
+                    });
 
                     indexX++;
 

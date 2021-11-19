@@ -8,7 +8,7 @@ namespace VoxelGame.Game
         public readonly bool IsTransparent;
         public readonly BlockTexture Texture;
         public readonly bool IsRotationCameraRelative;
-        
+
         /// <summary>
         /// Creates a block.
         /// </summary>
@@ -40,7 +40,7 @@ namespace VoxelGame.Game
         public BlockTexture(string texture)
         {
             UVTransform uvTexture = TextureManager.GetTexture(texture);
-            
+
             TopTexture = uvTexture;
             BottomTexture = uvTexture;
             LeftTexture = uvTexture;
@@ -48,7 +48,7 @@ namespace VoxelGame.Game
             FrontTexture = uvTexture;
             BackTexture = uvTexture;
         }
-        
+
         public BlockTexture(string sides, string top, string bottom)
         {
             UVTransform uvSides = TextureManager.GetTexture(sides);
@@ -62,7 +62,7 @@ namespace VoxelGame.Game
             FrontTexture = uvSides;
             BackTexture = uvSides;
         }
-        
+
         public BlockTexture(string sides, string top, string bottom, string front)
         {
             UVTransform uvSides = TextureManager.GetTexture(sides);
@@ -77,7 +77,7 @@ namespace VoxelGame.Game
             FrontTexture = uvFront;
             BackTexture = uvSides;
         }
-        
+
         public BlockTexture(string top, string bottom, string front, string back, string left, string right)
         {
             UVTransform uvTop = TextureManager.GetTexture(top);
