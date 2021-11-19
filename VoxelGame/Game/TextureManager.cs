@@ -43,7 +43,7 @@ namespace VoxelGame.Game
             int indexX = 0;
             int indexY = 0;
 
-            foreach (var textureFile in Directory.GetFiles("Resources/blocks/"))
+            foreach (var textureFile in Directory.GetFiles("resources/blocks/"))
             {
                 if (Path.GetExtension(textureFile) == ".png")
                 {
@@ -76,7 +76,7 @@ namespace VoxelGame.Game
             }
 
             _textureAtlas.Mutate(x => x.Flip(FlipMode.Horizontal));
-            _textureAtlas.Save("Resources/atlas.png");
+            _textureAtlas.Save("resources/atlas.png");
         }
     }
 
