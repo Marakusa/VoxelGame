@@ -20,7 +20,7 @@ namespace VoxelGame.Game
 
         private void LoadBlocks()
         {
-            foreach (var dataFile in Directory.GetFiles("resources/data/blocks/"))
+            foreach (var dataFile in Directory.GetFiles("assets/data/blocks/"))
             {
                 if (Path.GetExtension(dataFile) == ".json")
                 {
