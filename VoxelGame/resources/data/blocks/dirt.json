@@ -6,5 +6,6 @@
   "texture": [
     "dirt"
   ],
-  "camera_relative": false
+  "camera_relative": false,
+  "gravity": false
 }

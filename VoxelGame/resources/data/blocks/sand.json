@@ -1,11 +1,11 @@
 {
-  "id": "stone",
-  "name": "Stone",
+  "id": "sand",
+  "name": "Sand",
   "max_stack": 100,
   "transparent": false,
   "texture": [
-    "stone"
+    "sand"
   ],
   "camera_relative": false,
-  "gravity": false
+  "gravity": true
 }

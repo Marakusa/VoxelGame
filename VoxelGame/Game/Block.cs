@@ -8,6 +8,7 @@ namespace VoxelGame.Game
         public readonly bool IsTransparent;
         public readonly BlockTexture Texture;
         public readonly bool IsRotationCameraRelative;
+        public readonly bool HasGravity;
 
         /// <summary>
         /// Creates a block.

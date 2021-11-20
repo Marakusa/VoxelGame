@@ -7,7 +7,7 @@ namespace VoxelGame.Game
 {
     public class Chunk
     {
-        public Vector2 position;
+        public Vector2 Position;
 
         private const int Width = 64, Height = 128;
 
@@ -23,12 +23,94 @@ namespace VoxelGame.Game
         public Chunk(int x, int y)
         {
             _blocks = new Block[Width, Height, Width];
-            position = new(x, y);
+            Position = new(x, y);
         }
 
+        public Vector3 CheckRaycastHitPoint(Vector3 start, Vector3 direction, float length)
+        {
+            Vector3 dir = start - direction;
+            dir.Normalize();
+            direction = dir;
+            
+            Vector3 end = direction * length;
+            
+            int mapX = (int)start.X;
+            int mapY = (int)start.Y;
+            int mapZ = (int)start.Z;
+            
+            double toDistX;
+            double toDistY;
+            double toDistZ;
+            
+            double deltaDistX = (direction.X == 0) ? 1e30 : Math.Abs(1 / direction.X);
+            double deltaDistY = (direction.Y == 0) ? 1e30 : Math.Abs(1 / direction.Y);
+            double deltaDistZ = (direction.Z == 0) ? 1e30 : Math.Abs(1 / direction.Z);
+            double perpWallDist;
+            
+            int stepX;
+            int stepY;
+            int stepZ;
+
+            bool hit = false;
+            int side;
+            
+            if (direction.X < 0)
+            {
+                stepX = -1;
+                toDistX = ((int)start.X - mapX) * deltaDistX;
+            }
+            else
+            {
+                stepX = 1;
+                toDistX = (mapX + 1.0 - (int)start.X) * deltaDistX;
+            }
+            
+            if (direction.Y < 0)
+            {
+                stepY = -1;
+                toDistY = ((int)start.Y - mapY) * deltaDistY;
+            }
+            else
+            {
+                stepY = 1;
+                toDistY = (mapY + 1.0 - (int)start.Y) * deltaDistY;
+            }
+            
+            if (direction.Z < 0)
+            {
+                stepZ = -1;
+                toDistZ = ((int)start.Z - mapZ) * deltaDistZ;
+            }
+            else
+            {
+                stepZ = 1;
+                toDistZ = (mapZ + 1.0 - (int)start.Z) * deltaDistZ;
+            }
+            
+            while (!hit)
+            {
+                /*if (toDistX < toDistY)
+                {
+                    toDistX += deltaDistX;
+                    mapX += stepX;
+                    side = 0;
+                }
+                else
+                {
+                    toDistY += deltaDistY;
+                    mapY += stepY;
+                    side = 1;
+                }*/
+                
+                if (_blocks[mapX, mapY, mapZ] != null) hit = true;
+            }
+            
+            return Vector3.Zero;
+        }
+        
         public void Generate()
         {
-            var noiseData = Noise.GetChunkNoise((int)Math.Round(position.X), (int)Math.Round(position.Y));
+            var noiseData = Noise.GetChunkNoise((int)Math.Round(Position.X), (int)Math.Round(Position.Y));
             
             for (int y = 0; y < Height; y++)
             {
@@ -46,9 +128,6 @@ namespace VoxelGame.Game
                                 _blocks[x, y, z] = Blocks.Get("dirt");
                             else if (y <= noiseHeight - 4)
                                 _blocks[x, y, z] = Blocks.Get("stone");
-                            
-                            if (y == 64)
-                                _blocks[x, y, z] = null;
                         }
                     }
                 }
@@ -91,7 +170,7 @@ namespace VoxelGame.Game
             
             if ((x >= -1 && y >= 0 && z >= -1) || (x <= Width && y < Height && z <= Width))
             {
-                int noiseY = Noise.GetNoise(x + (int)Math.Round(position.X), z + (int)Math.Round(position.Y));
+                int noiseY = Noise.GetNoise(x + (int)Math.Round(Position.X), z + (int)Math.Round(Position.Y));
                 return noiseY >= y;
             }
 
@@ -108,9 +187,9 @@ namespace VoxelGame.Game
                 
                 _vertices.AddRange(new[]
                 {
-                    vertex.X + (int)Math.Round(position.X), 
+                    vertex.X + (int)Math.Round(Position.X), 
                     vertex.Y, 
-                    vertex.Z + (int)Math.Round(position.Y),
+                    vertex.Z + (int)Math.Round(Position.Y),
                     uvs[i].X, 
                     uvs[i].Y, 
                     lightLevel

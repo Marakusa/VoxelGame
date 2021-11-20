@@ -53,5 +53,6 @@ namespace VoxelGame.Game
         public bool transparent;
         public string[] texture;
         public bool camera_relative;
+        public bool gravity = false;
     }
 }

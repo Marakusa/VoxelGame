@@ -6,5 +6,6 @@
   "texture": [
     "debug"
   ],
-  "camera_relative": true
+  "camera_relative": true,
+  "gravity": false
 }
