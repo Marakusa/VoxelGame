@@ -18,7 +18,7 @@ namespace VoxelGame.Engine
         public Vector3 CameraRight;
         public Vector3 CameraUp;
 
-        private const float Speed = 5.0f;
+        private const float Speed = 15.0f;
         private const float Sensitivity = 0.1f;
 
         public Vector2 LastMousePosition, CurrentMousePosition;
@@ -45,7 +45,7 @@ namespace VoxelGame.Engine
             CameraRight = Vector3.Normalize(Vector3.Cross(Up, CameraDirection));
             CameraUp = Vector3.Cross(CameraDirection, CameraRight);
 
-            Console.WriteLine(Position.ToString());
+            //Console.WriteLine(Position.ToString());
         }
 
         public void Look(Vector2 mousePosition)

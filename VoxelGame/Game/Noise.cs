@@ -7,23 +7,25 @@ namespace VoxelGame.Game
     {
         private static FastNoiseLite noise;
 
+        private static float _noiseFreq = 1f;
         private static float _noiseSize = 1f;
         
-        public Noise(float noiseSize)
+        public Noise(float frequency, float size)
         {
             noise = new();
             noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-            _noiseSize = noiseSize;
+            _noiseFreq = frequency;
+            _noiseSize = size;
         }
         
         public static int GetNoise(int x, int y)
         {
-            return (int)Math.Round(noise.GetNoise(x, y) * 5f + 60f);
+            return (int)Math.Round(noise.GetNoise(x, y) * 5f * _noiseSize + 60f);
         }
         
         public static int[,] GetChunkNoise(int locationX, int locationY)
         {
-            int size = (int)Math.Round(128 / _noiseSize);
+            int size = (int)Math.Round(128 * _noiseFreq);
             int[,] noiseData = new int[size, size];
 
             for (int y = 0; y < size; y++)

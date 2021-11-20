@@ -40,7 +40,7 @@ namespace VoxelGame.Engine
 
         protected override void OnLoad()
         {
-            Noise noise = new(1f);
+            Noise noise = new(1f, 1f);
             Blocks blocks = new();
 
             _shader = new("resources/shader.vert", "resources/shader.frag");

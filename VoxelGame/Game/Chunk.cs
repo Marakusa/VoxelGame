@@ -8,7 +8,7 @@ namespace VoxelGame.Game
     {
         public Vector2 position;
 
-        private const int Width = 16, Height = 256;
+        private const int Width = 64, Height = 128;
 
         private Block[,,] _blocks;
 
@@ -45,6 +45,9 @@ namespace VoxelGame.Game
                                 _blocks[x, y, z] = Blocks.Get("dirt");
                             else if (y <= noiseHeight - 4)
                                 _blocks[x, y, z] = Blocks.Get("stone");
+                            
+                            if (y == 64)
+                                _blocks[x, y, z] = null;
                         }
                     }
                 }
@@ -95,40 +98,13 @@ namespace VoxelGame.Game
         }
 
         private int _indicesIndex = 0;
-        private void AddMesh(Vector3[] vertices, Vector2[] uvs, int[] indices, int x, int y, int z, FaceSide side)
+        private void AddMesh(Vector3[] vertices, Vector2[] uvs, int[] indices, int blockX, int blockY, int blockZ, FaceSide side)
         {
             int i = 0;
             foreach (var vertex in vertices)
             {
-                float lightLevel = 1f;
-
-                if (side == FaceSide.Bottom)
-                    lightLevel -= 0.5f;
-
-                if (side == FaceSide.Top)
-                {
-                    if (HasBlock((int)Math.Round(vertex.X), (int)Math.Round(vertex.Y), (int)Math.Round(vertex.Z)))
-                    {
-                        lightLevel -= 0.25f;
-                    }
-                }
-                else if (side == FaceSide.Front || side == FaceSide.Left)
-                {
-                    if (HasBlock((int)Math.Round(vertex.X), (int)Math.Round(vertex.Y), (int)Math.Round(vertex.Z)))
-                    {
-                        lightLevel -= 0.25f;
-                    }
-                }
-                else if (side == FaceSide.Back || side == FaceSide.Right)
-                {
-                    if (HasBlock((int)Math.Round(vertex.X + 1), (int)Math.Round(vertex.Y), (int)Math.Round(vertex.Z + 1)))
-                    {
-                        lightLevel -= 0.25f;
-                    }
-                }
-
-                lightLevel = Math.Clamp(lightLevel, 0f, 1f);
-
+                float lightLevel = CalculateLightLevel(vertex, side, blockX, blockY, blockZ);
+                
                 _vertices.AddRange(new[]
                 {
                     vertex.X + (int)Math.Round(position.X), 
@@ -147,6 +123,62 @@ namespace VoxelGame.Game
             }
 
             _indicesIndex += 4;
+        }
+
+        private float CalculateLightLevel(Vector3 vertex, FaceSide side, int blockX, int blockY, int blockZ)
+        {
+            float lightLevel = 1f;
+
+            int vX = (int)Math.Round(vertex.X), vY = (int)Math.Round(vertex.Y), vZ = (int)Math.Round(vertex.Z);
+            
+            switch (side)
+            {
+                case FaceSide.Bottom:
+                    lightLevel -= 0.8f;
+                    break;
+                case FaceSide.Top:
+                    if (HasBlock(vX, vY, vZ)
+                        || HasBlock(vX - 1, vY, vZ)
+                        || HasBlock(vX, vY, vZ - 1)
+                        || HasBlock(vX - 1, vY, vZ - 1)
+                        
+                        || HasBlock(vX, vY + 1, vZ)
+                        || HasBlock(vX - 1, vY + 1, vZ - 1))
+                    {
+                        lightLevel -= 0.35f;
+                    }
+                    break;
+                case FaceSide.Front:
+                    if (HasBlock(vX, vY - 1, vZ - 1)
+                        || HasBlock(vX - 1, vY - 1, vZ - 1))
+                    {
+                        lightLevel -= 0.35f;
+                    }
+                    break;
+                case FaceSide.Left:
+                    if (HasBlock(vX - 1, vY - 1, vZ)
+                        || HasBlock(vX - 1, vY - 1, vZ - 1))
+                    {
+                        lightLevel -= 0.35f;
+                    }
+                    break;
+                case FaceSide.Right:
+                    if (HasBlock(vX, vY - 1, vZ)
+                        || HasBlock(vX, vY - 1, vZ - 1))
+                    {
+                        lightLevel -= 0.35f;
+                    }
+                    break;
+                case FaceSide.Back:
+                    if (HasBlock(vX, vY - 1, vZ)
+                        || HasBlock(vX - 1, vY - 1, vZ))
+                    {
+                        lightLevel -= 0.35f;
+                    }
+                    break;
+            }
+
+            return Math.Clamp(lightLevel, 0f, 1f);
         }
 
         private void GenerateMeshFront(int x, int y, int z)
