@@ -31,7 +31,7 @@ namespace VoxelGame.Engine
 
         public Camera()
         {
-            Position = new Vector3(8f, 64f, -8f);
+            Position = new Vector3(8f, 65f, 8f);
             CameraTarget = Position + new Vector3(0.0f, 0.0f, 1.0f);
             CameraDirection = Vector3.Normalize(Position - CameraTarget);
             Front = new Vector3(0.0f, 0.0f, 1.0f);
