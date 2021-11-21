@@ -9,7 +9,7 @@ namespace VoxelGame.Game
     {
         public Vector2 Position;
 
-        private const int Width = 64, Height = 128;
+        public readonly int Width = 64, Height = 128;
 
         private Block[,,] _blocks;
 
@@ -26,12 +26,22 @@ namespace VoxelGame.Game
             Position = new(x, y);
         }
 
+        public void DestroyBlock(Vector3 position)
+        {
+            if (position.X >= Position.X && position.Y >= 0 && position.Z >= Position.Y
+                && position.X < Position.X + Width && position.Y < Height && position.Z < Position.Y + Width)
+            {
+                Console.WriteLine(_blocks[(int)position.X, (int)position.Y, (int)position.Z].BlockId);
+
+                _blocks[(int)position.X, (int)position.Y, (int)position.Z] = null;
+                
+                //GenerateMesh();
+            }
+        }
+
         public Vector3 CheckRaycastHitPoint(Vector3 start, Vector3 direction, float length)
         {
-            Vector3 dir = start - direction;
-            dir.Normalize();
-            direction = dir;
-            
+            direction.Normalize();
             Vector3 end = direction * length;
             
             int mapX = (int)start.X;
@@ -42,17 +52,15 @@ namespace VoxelGame.Game
             double toDistY;
             double toDistZ;
             
-            double deltaDistX = (direction.X == 0) ? 1e30 : Math.Abs(1 / direction.X);
-            double deltaDistY = (direction.Y == 0) ? 1e30 : Math.Abs(1 / direction.Y);
-            double deltaDistZ = (direction.Z == 0) ? 1e30 : Math.Abs(1 / direction.Z);
-            double perpWallDist;
+            double deltaDistX = (direction.X == 0) ? 1e30 : (1 / direction.X);
+            double deltaDistY = (direction.Y == 0) ? 1e30 : (1 / direction.Y);
+            double deltaDistZ = (direction.Z == 0) ? 1e30 : (1 / direction.Z);
             
             int stepX;
             int stepY;
             int stepZ;
 
             bool hit = false;
-            int side;
             
             if (direction.X < 0)
             {
@@ -89,23 +97,38 @@ namespace VoxelGame.Game
             
             while (!hit)
             {
-                /*if (toDistX < toDistY)
+                if (toDistX < toDistY && toDistX < toDistZ)
                 {
                     toDistX += deltaDistX;
                     mapX += stepX;
-                    side = 0;
                 }
-                else
+                else if (toDistY < toDistZ)
                 {
                     toDistY += deltaDistY;
                     mapY += stepY;
-                    side = 1;
-                }*/
-                
-                if (_blocks[mapX, mapY, mapZ] != null) hit = true;
+                }
+                else
+                {
+                    toDistZ += deltaDistZ;
+                    mapZ += stepZ;
+                }
+
+                if (Vector3.Distance(start, new(mapX, mapY, mapZ)) > length)
+                {
+                    return Vector3.NegativeInfinity;
+                }
+
+                if (mapX >= Position.X && mapY >= 0 && mapZ >= Position.Y
+                    && mapX < Position.X + Width && mapY < Height && mapZ < Position.Y + Width)
+                {
+                    if (_blocks[mapX, mapY, mapZ] != null)
+                    {
+                        hit = true;
+                    }
+                }
             }
             
-            return Vector3.Zero;
+            return new(mapX, mapY, mapZ);
         }
         
         public void Generate()
@@ -138,13 +161,16 @@ namespace VoxelGame.Game
 
         private void GenerateMesh()
         {
+            _vertices.Clear();
+            _indices.Clear();
+            
             for (int x = 0; x < Width; x++)
             {
                 for (int y = 0; y < Height; y++)
                 {
                     for (int z = 0; z < Width; z++)
                     {
-                        if (_blocks[x, y, z] != null && _blocks[x, y, z].BlockId != "air")
+                        if (_blocks[x, y, z] != null)
                         {
                             if (!HasBlock(x, y, z + 1)) GenerateMeshBack(x, y, z);
                             if (!HasBlock(x, y, z - 1)) GenerateMeshFront(x, y, z);

@@ -39,6 +39,8 @@ namespace VoxelGame.Engine
 
         private Texture _texture;
 
+        private List<Chunk> _chunks = new();
+
         protected override void OnLoad()
         {
             Noise noise = new(1f, 1f);
@@ -59,12 +61,19 @@ namespace VoxelGame.Engine
             List<int> indicesList = new();
             
             Chunk chunk = new(0, 0);
+            
             chunk.Generated += (sender, vertices, indices) =>
             {
                 verticesList.AddRange(vertices);
                 indicesList.AddRange(indices);
+                
+                _vertices = verticesList.ToArray();
+                _indices = indicesList.ToArray();
             };
             chunk.Generate();
+            
+            _chunks.Add(chunk);
+            
             /*for (int x = 0; x < 3; x++)
             {
                 for (int y = 0; y < 3; y++)
@@ -79,9 +88,6 @@ namespace VoxelGame.Engine
                 }
             }*/
             
-            _vertices = verticesList.ToArray();
-            _indices = indicesList.ToArray();
-
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.DepthTest);
             
@@ -128,11 +134,11 @@ namespace VoxelGame.Engine
             _vertexBufferObject = GL.GenBuffer();
             GL.BindVertexArray(_vertexArrayObject);
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.DynamicDraw);
-                
+            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+            
             _indicesBufferObject = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indicesBufferObject);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(int), _indices, BufferUsageHint.DynamicDraw);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(int), _indices, BufferUsageHint.StaticDraw);
 
             var positionLocation = GL.GetAttribLocation(_shader.Handle, "position");
             GL.EnableVertexAttribArray(positionLocation);
@@ -209,11 +215,37 @@ namespace VoxelGame.Engine
             base.OnMouseMove(e);
         }
 
+        private bool _mouseDown;
+
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
+            if (PlayerCamera.IsLocked && !_mouseDown)
+            {
+                foreach (var chunk in _chunks)
+                {
+                    Console.WriteLine("------------------------------------");
+                    Console.WriteLine(PlayerCamera.Position.ToString());
+                    Console.WriteLine(PlayerCamera.Front.ToString());
+                    Console.WriteLine("----------------");
+                    Vector3 hit = chunk.CheckRaycastHitPoint(PlayerCamera.Position, PlayerCamera.Front, 10);
+                    if (hit != Vector3.NegativeInfinity)
+                    {
+                        chunk.DestroyBlock(hit);
+                    }
+                }
+                
+                _mouseDown = true;
+            }
+            
             PlayerCamera.IsLocked = true;
             
             base.OnMouseDown(e);
+        }
+        protected override void OnMouseUp(MouseButtonEventArgs e)
+        {
+            _mouseDown = false;
+            
+            base.OnMouseUp(e);
         }
 
         public override void Close()
