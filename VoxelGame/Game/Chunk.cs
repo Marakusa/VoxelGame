@@ -13,15 +13,17 @@ namespace VoxelGame.Game
 
         private Block[,,] _blocks;
 
-        private List<float> _vertices = new();
-        private List<int> _indices = new();
+        public List<float> Vertices = new();
+        public List<int> Indices = new();
 
         public delegate void GeneratedHandler(object sender, float[] vertices, int[] indices);
 
         public event GeneratedHandler Generated;
 
-        public Chunk(int x, int y)
+        public Chunk(int x, int y, int w, int h)
         {
+            Width = w;
+            Height = h;
             _blocks = new Block[Width, Height, Width];
             Position = new(x, y);
         }
@@ -161,8 +163,8 @@ namespace VoxelGame.Game
 
         private void GenerateMesh()
         {
-            _vertices.Clear();
-            _indices.Clear();
+            Vertices.Clear();
+            Indices.Clear();
             
             for (int x = 0; x < Width; x++)
             {
@@ -183,7 +185,7 @@ namespace VoxelGame.Game
                 }
             }
             
-            Generated?.Invoke(this, _vertices.ToArray(), _indices.ToArray());
+            Generated?.Invoke(this, Vertices.ToArray(), Indices.ToArray());
         }
 
         private bool HasBlock(int x, int y, int z)
@@ -211,7 +213,7 @@ namespace VoxelGame.Game
             {
                 float lightLevel = CalculateLightLevel(vertex, side, blockX, blockY, blockZ);
                 
-                _vertices.AddRange(new[]
+                Vertices.AddRange(new[]
                 {
                     vertex.X + (int)Math.Round(Position.X), 
                     vertex.Y, 
@@ -225,7 +227,7 @@ namespace VoxelGame.Game
 
             foreach (var index in indices)
             {
-                _indices.Add(index + _indicesIndex);
+                Indices.Add(index + _indicesIndex);
             }
 
             _indicesIndex += 4;

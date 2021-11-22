@@ -28,19 +28,29 @@ namespace VoxelGame.Engine
         public Camera PlayerCamera;
 
         private Shader _shader;
-        private int _vertexArrayObject;
-        private int _vertexBufferObject;
-        private int _indicesBufferObject;
-
-        private int _rowLength = 6;
-
-        private float[] _vertices = Array.Empty<float>();
-        private int[] _indices = Array.Empty<int>();
 
         private Texture _texture;
 
-        private List<Chunk> _chunks = new();
+        private Dictionary<Vector2, Chunk> _chunks = new();
 
+        private List<float> _chunkVertices = new();
+        private List<int> _chunkIndices = new();
+
+        
+
+        public int VertexArrayObject;
+        public int VertexBufferObject;
+        public int IndicesBufferObject;
+
+        public int Cbo;
+        
+        public int RowLength = 6;
+
+        public float[] Vertices = Array.Empty<float>();
+        public int[] Indices = Array.Empty<int>();
+        
+        
+        
         protected override void OnLoad()
         {
             Noise noise = new(1f, 1f);
@@ -60,7 +70,7 @@ namespace VoxelGame.Engine
             List<float> verticesList = new();
             List<int> indicesList = new();
             
-            Chunk chunk = new(0, 0);
+            /*Chunk chunk = new(0, 0);
             
             chunk.Generated += (sender, vertices, indices) =>
             {
@@ -70,23 +80,20 @@ namespace VoxelGame.Engine
                 _vertices = verticesList.ToArray();
                 _indices = indicesList.ToArray();
             };
-            chunk.Generate();
+            chunk.Generate();*/
             
-            _chunks.Add(chunk);
-            
-            /*for (int x = 0; x < 3; x++)
+            for (int x = 0; x < 5; x++)
             {
-                for (int y = 0; y < 3; y++)
+                for (int z = 0; z < 5; z++)
                 {
-                    Chunk chunk = new(x * 16, y * 16);
+                    Chunk chunk = new(x * 16, z * 16, 16, 256);
                     chunk.Generated += (sender, vertices, indices) =>
                     {
-                        verticesList.AddRange(vertices);
-                        indicesList.AddRange(indices);
                     };
+                    _chunks.Add(new(chunk.Position.X, chunk.Position.Y), chunk);
                     chunk.Generate();
                 }
-            }*/
+            }
             
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.DepthTest);
@@ -96,6 +103,9 @@ namespace VoxelGame.Engine
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
+            _chunkVertices.Clear();
+            _chunkIndices.Clear();
+            
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             GL.UseProgram(_shader.Handle);
@@ -114,15 +124,30 @@ namespace VoxelGame.Engine
                 _shader.SetMatrix4("projection", projection);
             }
 
-            Render();
+            foreach (var chunk in _chunks)
+            {
+                AddChunkToRender(chunk.Value);
+            }
 
+            Render();
+            CleanRender();
+            
             Context.SwapBuffers();
 
             base.OnRenderFrame(e);
         }
+
+        private void AddChunkToRender(Chunk chunk)
+        {
+            _chunkVertices.AddRange(chunk.Vertices);
+            _chunkIndices.AddRange(chunk.Indices);
+        }
         
         private void Render()
         {
+            Vertices = _chunkVertices.ToArray();
+            Indices = _chunkIndices.ToArray();
+            
             float[] camPos = new[]
             {
                 PlayerCamera.Position.X,
@@ -130,48 +155,52 @@ namespace VoxelGame.Engine
                 PlayerCamera.Position.Z
             };
             
-            _vertexArrayObject = GL.GenVertexArray();
-            _vertexBufferObject = GL.GenBuffer();
-            GL.BindVertexArray(_vertexArrayObject);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+            VertexArrayObject = GL.GenVertexArray();
+            VertexBufferObject = GL.GenBuffer();
+            GL.BindVertexArray(VertexArrayObject);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferObject);
+            GL.BufferData(BufferTarget.ArrayBuffer, Vertices.Length * sizeof(float), Vertices, BufferUsageHint.StaticDraw);
             
-            _indicesBufferObject = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indicesBufferObject);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(int), _indices, BufferUsageHint.StaticDraw);
+            IndicesBufferObject = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesBufferObject);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, Indices.Length * sizeof(int), Indices, BufferUsageHint.StaticDraw);
 
             var positionLocation = GL.GetAttribLocation(_shader.Handle, "position");
             GL.EnableVertexAttribArray(positionLocation);
-            GL.VertexAttribPointer(positionLocation, 3, VertexAttribPointerType.Float, false, _rowLength * sizeof(float), 0);
+            GL.VertexAttribPointer(positionLocation, 3, VertexAttribPointerType.Float, false, RowLength * sizeof(float), 0);
 
             int texCoordLocation = _shader.GetAttribLocation("aTexCoord");
             GL.EnableVertexAttribArray(texCoordLocation);
-            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, _rowLength * sizeof(float), 3 * sizeof(float));
+            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, RowLength * sizeof(float), 3 * sizeof(float));
 
             int colorMultiplier = _shader.GetAttribLocation("aColorMultiplier");
             GL.EnableVertexAttribArray(colorMultiplier);
-            GL.VertexAttribPointer(colorMultiplier, 1, VertexAttribPointerType.Float, false, _rowLength * sizeof(float), 5 * sizeof(float));
+            GL.VertexAttribPointer(colorMultiplier, 1, VertexAttribPointerType.Float, false, RowLength * sizeof(float), 5 * sizeof(float));
 
-            int cbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, cbo);
+            Cbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, Cbo);
             GL.BufferData(BufferTarget.ArrayBuffer, camPos.Length * sizeof(float), camPos, BufferUsageHint.DynamicRead);
 
             int cameraPosition = _shader.GetAttribLocation("aCameraPosition");
             GL.EnableVertexAttribArray(cameraPosition);
             GL.VertexAttribPointer(cameraPosition, 3, VertexAttribPointerType.Float, false, camPos.Length * sizeof(float), camPos);
+       
+            GL.DrawElements(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, 0);
+            //GL.DrawArrays(PrimitiveType.Triangles, 0, Vertices.Length / RowLength);
+        }
 
-            GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
-
-            GL.DeleteVertexArray(_vertexArrayObject);
-            GL.DeleteBuffer(_vertexBufferObject);
-            GL.DeleteBuffer(_indicesBufferObject);
-            GL.DeleteBuffer(cbo);
+        private void CleanRender()
+        {
+            GL.DeleteVertexArray(VertexArrayObject);
+            GL.DeleteBuffer(VertexBufferObject);
+            GL.DeleteBuffer(IndicesBufferObject);
+            GL.DeleteBuffer(Cbo);
             GL.BindVertexArray(0);
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
             GL.UseProgram(0);
         }
-
+        
         protected override void OnResize(ResizeEventArgs e)
         {
             GL.Viewport(0, 0, Size.X, Size.Y);
@@ -227,10 +256,10 @@ namespace VoxelGame.Engine
                     Console.WriteLine(PlayerCamera.Position.ToString());
                     Console.WriteLine(PlayerCamera.Front.ToString());
                     Console.WriteLine("----------------");
-                    Vector3 hit = chunk.CheckRaycastHitPoint(PlayerCamera.Position, PlayerCamera.Front, 10);
+                    Vector3 hit = chunk.Value.CheckRaycastHitPoint(PlayerCamera.Position, PlayerCamera.Front, 10);
                     if (hit != Vector3.NegativeInfinity)
                     {
-                        chunk.DestroyBlock(hit);
+                        chunk.Value.DestroyBlock(hit);
                     }
                 }
                 
