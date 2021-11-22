@@ -44,7 +44,16 @@ namespace VoxelGame.Engine
             GL.DeleteShader(vertexShader);
             GL.DeleteShader(fragmentShader);
         }
-
+        
+        public void Bind()
+        {
+            GL.UseProgram(Handle);
+        }
+        public void Unbind()
+        {
+            GL.UseProgram(0);
+        }
+        
         private void GetUniforms()
         {
             GL.GetProgram(Handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);
@@ -60,11 +69,6 @@ namespace VoxelGame.Engine
         public int GetAttribLocation(string attribName)
         {
             return GL.GetAttribLocation(Handle, attribName);
-        }
-
-        public void Use()
-        {
-            GL.UseProgram(Handle);
         }
 
         /// <summary>
@@ -123,11 +127,13 @@ namespace VoxelGame.Engine
             if (_disposedValue) return;
             _disposedValue = disposing;
             
+            Unbind();
             GL.DeleteProgram(Handle);
         }
 
         ~Shader()
         {
+            Unbind();
             GL.DeleteProgram(Handle);
         }
 
