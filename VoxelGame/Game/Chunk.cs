@@ -14,9 +14,9 @@ namespace VoxelGame.Game
         private Block[,,] _blocks;
 
         public List<float> Vertices = new();
-        public List<int> Indices = new();
+        public List<uint> Indices = new();
 
-        public delegate void GeneratedHandler(object sender, float[] vertices, int[] indices);
+        public delegate void GeneratedHandler(object sender, float[] vertices, uint[] indices);
 
         public event GeneratedHandler Generated;
 
@@ -205,8 +205,8 @@ namespace VoxelGame.Game
             return false;
         }
 
-        private int _indicesIndex = 0;
-        private void AddMesh(Vector3[] vertices, Vector2[] uvs, int[] indices, int blockX, int blockY, int blockZ, FaceSide side)
+        private uint _indicesIndex = 0;
+        private void AddMesh(Vector3[] vertices, Vector2[] uvs, uint[] indices, int blockX, int blockY, int blockZ, FaceSide side)
         {
             int i = 0;
             foreach (var vertex in vertices)
@@ -312,7 +312,7 @@ namespace VoxelGame.Game
                 new(ux + uw, uy + uh),
                 new(ux, uy)
             };
-            int[] indices =
+            uint[] indices =
             {
                 0, 1, 2,
                 0, 3, 1
@@ -345,7 +345,7 @@ namespace VoxelGame.Game
                 new(ux, uy + uh),
                 new(ux + uw, uy)
             };
-            int[] indices =
+            uint[] indices =
             {
                 3, 2, 1,
                 3, 0, 2
@@ -378,7 +378,7 @@ namespace VoxelGame.Game
                 new(ux, uy + uh),
                 new(ux + uw, uy),
             };
-            int[] indices =
+            uint[] indices =
             {
                 3, 2, 1,
                 3, 0, 2
@@ -409,7 +409,7 @@ namespace VoxelGame.Game
                 new(ux + uw, uy + uh),
                 new(ux, uy),
             };
-            int[] indices =
+            uint[] indices =
             {
                 0, 1, 2,
                 0, 3, 1
@@ -442,7 +442,7 @@ namespace VoxelGame.Game
                 new(ux + uw, uy + uh),
                 new(ux, uy),
             };
-            int[] indices =
+            uint[] indices =
             {
                 0, 1, 2,
                 0, 3, 1
@@ -473,7 +473,7 @@ namespace VoxelGame.Game
                 new(ux, uy + uh),
                 new(ux + uw, uy),
             };
-            int[] indices =
+            uint[] indices =
             {
                 3, 2, 1,
                 3, 0, 2

@@ -6,6 +6,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using VoxelGame.Game;
+using ErrorCode = OpenTK.Graphics.OpenGL4.ErrorCode;
 
 namespace VoxelGame.Engine
 {
@@ -34,7 +35,7 @@ namespace VoxelGame.Engine
         private Dictionary<Vector2, Chunk> _chunks = new();
 
         private List<float> _chunkVertices = new();
-        private List<int> _chunkIndices = new();
+        private List<uint> _chunkIndices = new();
 
         
 
@@ -47,7 +48,7 @@ namespace VoxelGame.Engine
         public int RowLength = 6;
 
         public float[] Vertices = Array.Empty<float>();
-        public int[] Indices = Array.Empty<int>();
+        public uint[] Indices = Array.Empty<uint>();
         
         
         
@@ -82,9 +83,9 @@ namespace VoxelGame.Engine
             };
             chunk.Generate();*/
             
-            for (int x = 0; x < 5; x++)
+            for (int x = 0; x < 2; x++)
             {
-                for (int z = 0; z < 5; z++)
+                for (int z = 0; z < 1; z++)
                 {
                     Chunk chunk = new(x * 16, z * 16, 16, 256);
                     chunk.Generated += (sender, vertices, indices) =>
@@ -131,6 +132,10 @@ namespace VoxelGame.Engine
 
             Render();
             CleanRender();
+
+            var error = GL.GetError();
+            if (error != ErrorCode.NoError)
+                Console.WriteLine($"[OpenGL Error] {error}");
             
             Context.SwapBuffers();
 
@@ -163,7 +168,7 @@ namespace VoxelGame.Engine
             
             IndicesBufferObject = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesBufferObject);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, Indices.Length * sizeof(int), Indices, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, Indices.Length * sizeof(uint), Indices, BufferUsageHint.StaticDraw);
 
             var positionLocation = GL.GetAttribLocation(_shader.Handle, "position");
             GL.EnableVertexAttribArray(positionLocation);
