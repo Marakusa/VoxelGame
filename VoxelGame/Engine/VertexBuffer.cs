@@ -9,7 +9,7 @@ namespace VoxelGame.Engine
 
         public VertexBuffer(float[] data, int size)
         {
-            _renderer = GL.GenBuffer();
+            GL.GenBuffers(1, out _renderer);
             GL.BindBuffer(BufferTarget.ArrayBuffer, _renderer);
             GL.BufferData(BufferTarget.ArrayBuffer, size, data, BufferUsageHint.StaticDraw);
         }
@@ -31,7 +31,33 @@ namespace VoxelGame.Engine
         public void Delete()
         {
             Unbind();
-            GL.DeleteBuffer(_renderer);
+            GL.DeleteBuffers(1, ref _renderer);
+            Dispose();
+        }
+
+        private bool _disposed;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                Unbind();
+                GL.DeleteBuffers(1, ref _renderer);
+            }
+
+            _renderer = 0;
+
+            _disposed = true;
+        }
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+            GC.Collect();
         }
     }
 }
