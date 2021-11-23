@@ -6,7 +6,7 @@ layout (location = 1) in vec2 aTexCoord;
 
 layout (location = 2) in float aColorMultiplier;
 
-layout (location = 3) in vec3 aCameraPosition;
+//layout (location = 3) in vec3 aCameraPosition;
 
 out vec2 texCoord;
 out vec4 colorMultiplier;
@@ -17,6 +17,8 @@ uniform mat4 projection;
 
 void main()
 {
+    vec3 aCameraPosition = vec3(0, 0, 0);
+    
     float xDist = aCameraPosition.x - position.x;
     float yDist = aCameraPosition.y - position.y;
     float zDist = aCameraPosition.z - position.z;

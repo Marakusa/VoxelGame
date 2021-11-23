@@ -9,13 +9,19 @@ namespace VoxelGame.Game
     {
         public Vector2 Position;
 
-        public readonly int Width = 64, Height = 128;
+        public readonly int Width = 16, Height = 128;
 
         private Block[,,] _blocks;
 
-        public List<float> Vertices = new();
-        public List<uint> Indices = new();
+        public float[] Vertices = Array.Empty<float>();
+        public uint[] Indices = Array.Empty<uint>();
 
+        public List<float> TempVertices = new();
+        public List<uint> TempIndices = new();
+
+        public VertexBuffer Vb;
+        public IndexBuffer Ib;
+        
         public delegate void GeneratedHandler(object sender, float[] vertices, uint[] indices);
 
         public event GeneratedHandler Generated;
@@ -37,7 +43,7 @@ namespace VoxelGame.Game
 
                 _blocks[(int)position.X, (int)position.Y, (int)position.Z] = null;
                 
-                //GenerateMesh();
+                GenerateMesh();
             }
         }
 
@@ -123,7 +129,7 @@ namespace VoxelGame.Game
                 if (mapX >= Position.X && mapY >= 0 && mapZ >= Position.Y
                     && mapX < Position.X + Width && mapY < Height && mapZ < Position.Y + Width)
                 {
-                    if (_blocks[mapX, mapY, mapZ] != null)
+                    if (_blocks[mapX - (int)Position.X, mapY, mapZ - (int)Position.Y] != null)
                     {
                         hit = true;
                     }
@@ -163,9 +169,20 @@ namespace VoxelGame.Game
 
         private void GenerateMesh()
         {
-            Vertices.Clear();
-            Indices.Clear();
-            
+            if (Vb != null)
+            {
+                Vb.Delete();
+                Vb.Dispose();
+            }
+            if (Ib != null)
+            {
+                Ib.Delete();
+                Ib.Dispose();
+            }
+
+            TempVertices.Clear();
+            TempIndices.Clear();
+
             for (int x = 0; x < Width; x++)
             {
                 for (int y = 0; y < Height; y++)
@@ -184,8 +201,22 @@ namespace VoxelGame.Game
                     }
                 }
             }
+
+            Vertices = TempVertices.ToArray();
+            Indices = TempIndices.ToArray();
             
-            Generated?.Invoke(this, Vertices.ToArray(), Indices.ToArray());
+            TempVertices.Clear();
+            TempIndices.Clear();
+
+            Console.WriteLine(Position.ToString());
+            Console.WriteLine(Vertices.Length.ToString());
+            Console.WriteLine(Indices.Length.ToString());
+            Console.WriteLine("----");
+
+            Vb = new(Vertices, Vertices.Length * sizeof(float));
+            Ib = new(Indices, Indices.Length * sizeof(uint));
+
+            Generated?.Invoke(this, Vertices, Indices);
         }
 
         private bool HasBlock(int x, int y, int z)
@@ -213,7 +244,7 @@ namespace VoxelGame.Game
             {
                 float lightLevel = CalculateLightLevel(vertex, side, blockX, blockY, blockZ);
                 
-                Vertices.AddRange(new[]
+                TempVertices.AddRange(new[]
                 {
                     vertex.X + (int)Math.Round(Position.X), 
                     vertex.Y, 
@@ -227,7 +258,7 @@ namespace VoxelGame.Game
 
             foreach (var index in indices)
             {
-                Indices.Add(index + _indicesIndex);
+                TempIndices.Add(index + _indicesIndex);
             }
 
             _indicesIndex += 4;
