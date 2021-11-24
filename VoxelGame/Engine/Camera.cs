@@ -29,9 +29,9 @@ namespace VoxelGame.Engine
         private bool _cursorVisible = false;
         private bool _firstMouse = true;
 
-        public Camera()
+        public Camera(Vector3 position)
         {
-            Position = new Vector3(8f, 65f, 8f);
+            Position = position;
             CameraTarget = Position + new Vector3(0.0f, 0.0f, 1.0f);
             CameraDirection = Vector3.Normalize(Position - CameraTarget);
             Front = new Vector3(0.0f, 0.0f, 1.0f);
@@ -82,32 +82,32 @@ namespace VoxelGame.Engine
         {
             if (input.IsKeyDown(Keys.W))
             {
-                Position += Front * Speed * (float)e.Time; //Forward 
+                Position += Front * Speed * (float)e.Time;
             }
 
             if (input.IsKeyDown(Keys.S))
             {
-                Position -= Front * Speed * (float)e.Time; //Backwards
+                Position -= Front * Speed * (float)e.Time;
             }
 
             if (input.IsKeyDown(Keys.A))
             {
-                Position -= Vector3.Normalize(Vector3.Cross(Front, Up)) * Speed * (float)e.Time; //Left
+                Position -= Vector3.Normalize(Vector3.Cross(Front, Up)) * Speed * (float)e.Time;
             }
 
             if (input.IsKeyDown(Keys.D))
             {
-                Position += Vector3.Normalize(Vector3.Cross(Front, Up)) * Speed * (float)e.Time; //Right
+                Position += Vector3.Normalize(Vector3.Cross(Front, Up)) * Speed * (float)e.Time;
             }
 
             if (input.IsKeyDown(Keys.Space))
             {
-                Position += Up * Speed * (float)e.Time; //Up 
+                Position += Up * Speed * (float)e.Time;
             }
 
             if (input.IsKeyDown(Keys.LeftShift))
             {
-                Position -= Up * Speed * (float)e.Time; //Down
+                Position -= Up * Speed * (float)e.Time;
             }
 
             if (input.IsKeyDown(Keys.Escape))

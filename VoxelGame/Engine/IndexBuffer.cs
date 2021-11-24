@@ -37,34 +37,8 @@ namespace VoxelGame.Engine
 
         public void Delete()
         {
-            Unbind();
             GL.DeleteBuffers(1, ref _renderer);
-            Dispose();
-        }
-        
-        private bool _disposed;
-        protected virtual void Dispose(bool disposing)
-        {
-            if (_disposed)
-            {
-                return;
-            }
-
-            if (disposing)
-            {
-                Unbind();
-                GL.DeleteBuffers(1, ref _renderer);
-            }
-
-            _renderer = 0;
-
-            _disposed = true;
-        }
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-            GC.Collect();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
         }
     }
 }

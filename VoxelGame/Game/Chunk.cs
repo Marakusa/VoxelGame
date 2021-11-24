@@ -9,15 +9,15 @@ namespace VoxelGame.Game
     {
         public Vector2 Position;
 
-        public readonly int Width = 16, Height = 128;
+        public readonly int Width = 2, Height = 128;
 
         private Block[,,] _blocks;
 
         public float[] Vertices = Array.Empty<float>();
         public uint[] Indices = Array.Empty<uint>();
 
-        public List<float> TempVertices = new();
-        public List<uint> TempIndices = new();
+        private readonly List<float> _tempVertices = new();
+        private readonly List<uint> _tempIndices = new();
 
         public VertexBuffer Vb;
         public IndexBuffer Ib;
@@ -36,10 +36,11 @@ namespace VoxelGame.Game
 
         public void DestroyBlock(Vector3 position)
         {
-            if (position.X >= Position.X && position.Y >= 0 && position.Z >= Position.Y
-                && position.X < Position.X + Width && position.Y < Height && position.Z < Position.Y + Width)
+            if (position.X >= 0 && position.Y >= 0 && position.Z >= 0
+                && position.X < Width && position.Y < Height && position.Z < Width)
             {
                 Console.WriteLine(_blocks[(int)position.X, (int)position.Y, (int)position.Z].BlockId);
+                Console.WriteLine(new Vector3((int)position.X, (int)position.Y, (int)position.Z).ToString());
 
                 _blocks[(int)position.X, (int)position.Y, (int)position.Z] = null;
                 
@@ -151,7 +152,7 @@ namespace VoxelGame.Game
                     {
                         int noiseHeight = noiseData[x, z];
 
-                        if (noiseHeight >= 0 && noiseHeight < Height)
+                        if (noiseHeight >= 0)
                         {
                             if (y == noiseHeight)
                                 _blocks[x, y, z] = Blocks.Get("grass_block");
@@ -169,19 +170,8 @@ namespace VoxelGame.Game
 
         private void GenerateMesh()
         {
-            if (Vb != null)
-            {
-                Vb.Delete();
-                Vb.Dispose();
-            }
-            if (Ib != null)
-            {
-                Ib.Delete();
-                Ib.Dispose();
-            }
-
-            TempVertices.Clear();
-            TempIndices.Clear();
+            _tempVertices.Clear();
+            _tempIndices.Clear();
 
             for (int x = 0; x < Width; x++)
             {
@@ -201,20 +191,23 @@ namespace VoxelGame.Game
                     }
                 }
             }
-
-            Vertices = TempVertices.ToArray();
-            Indices = TempIndices.ToArray();
             
-            TempVertices.Clear();
-            TempIndices.Clear();
+            Vertices = _tempVertices.ToArray();
+            Indices = _tempIndices.ToArray();
+            
+            _tempVertices.Clear();
+            _tempIndices.Clear();
+
+            Console.WriteLine((Vertices.Length / 6).ToString());
+            Console.WriteLine((Indices.Length / 6).ToString());
 
             Console.WriteLine(Position.ToString());
-            Console.WriteLine(Vertices.Length.ToString());
-            Console.WriteLine(Indices.Length.ToString());
             Console.WriteLine("----");
 
-            Vb = new(Vertices, Vertices.Length * sizeof(float));
-            Ib = new(Indices, Indices.Length * sizeof(uint));
+            Vb?.Delete();
+            Ib?.Delete();
+            Vb = new VertexBuffer(Vertices, Vertices.Length * sizeof(float));
+            Ib = new IndexBuffer(Indices, Indices.Length * sizeof(uint));
 
             Generated?.Invoke(this, Vertices, Indices);
         }
@@ -244,7 +237,7 @@ namespace VoxelGame.Game
             {
                 float lightLevel = CalculateLightLevel(vertex, side, blockX, blockY, blockZ);
                 
-                TempVertices.AddRange(new[]
+                _tempVertices.AddRange(new[]
                 {
                     vertex.X + (int)Math.Round(Position.X), 
                     vertex.Y, 
@@ -258,7 +251,7 @@ namespace VoxelGame.Game
 
             foreach (var index in indices)
             {
-                TempIndices.Add(index + _indicesIndex);
+                _tempIndices.Add(index + _indicesIndex);
             }
 
             _indicesIndex += 4;

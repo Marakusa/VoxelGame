@@ -47,18 +47,22 @@ namespace VoxelGame.Engine
 
             GL.ClearColor(0.4f, 0.6f, 1.0f, 0.0f);
 
-            PlayerCamera = new();
+            PlayerCamera = new(new Vector3(8f, 65f, 8f));
+            //PlayerCamera = new(new Vector3(3f, 3f, 3f));
 
             _texture = Texture.LoadFromFile("assets/atlas.png");
             _texture.Use(TextureUnit.Texture0);
 
             _shader.SetInt("texture0", 0);
 
+            //Chunk chunk = new(0, 0, 6, 2);
+            //_chunks.Add(chunk);
+            //chunk.Generate();
             for (int x = -RenderDistance; x < RenderDistance; x++)
             {
                 for (int z = -RenderDistance; z < RenderDistance; z++)
                 {
-                    Chunk chunk = new(x * 16, z * 16, 16, 256);
+                    Chunk chunk = new(x * 16, z * 16, 16, 128);
                     _chunks.Add(chunk);
                     chunk.Generate();
                 }
@@ -66,7 +70,7 @@ namespace VoxelGame.Engine
             
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.DepthTest);
-            
+
             base.OnLoad();
         }
         
@@ -107,11 +111,19 @@ namespace VoxelGame.Engine
 
             base.OnRenderFrame(e);
         }
+
+        private int c = 0;
         
         private void Render(Chunk chunk)
         {
             int vao = GL.GenVertexArray();
             GL.BindVertexArray(vao);
+
+            if (c != chunk.Ib.GetCount())
+            {
+                c = chunk.Ib.GetCount();
+                Console.WriteLine((chunk.Ib.GetCount() / sizeof(uint) / 6).ToString());
+            }
 
             chunk.Vb.Bind();
             chunk.Ib.Bind();
@@ -142,7 +154,7 @@ namespace VoxelGame.Engine
             GL.EnableVertexAttribArray(cameraPosition);
             GL.VertexAttribPointer(cameraPosition, 3, VertexAttribPointerType.Float, false, camPos.Length * sizeof(float), camPos);*/
             
-            GL.DrawElements(PrimitiveType.Triangles, chunk.Indices.Length, DrawElementsType.UnsignedInt, 0);
+            GL.DrawElements(PrimitiveType.Triangles, chunk.Ib.GetCount(), DrawElementsType.UnsignedInt, 0);
 
             GL.DeleteVertexArray(vao);
             //GL.DeleteBuffer(cbo);
@@ -152,8 +164,6 @@ namespace VoxelGame.Engine
             
             chunk.Vb.Unbind();
             chunk.Ib.Unbind();
-            //vb.Dispose();
-            //ib.Dispose();
         }
 
         protected override void OnResize(ResizeEventArgs e)
@@ -238,8 +248,6 @@ namespace VoxelGame.Engine
             {
                 chunk.Vb.Delete();
                 chunk.Ib.Delete();
-                chunk.Vb.Dispose();
-                chunk.Ib.Dispose();
             }
             CursorVisible = true;
             base.Close();
