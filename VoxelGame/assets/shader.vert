@@ -1,12 +1,10 @@
 #version 330 core
 
 layout (location = 0) in vec3 position;
-
 layout (location = 1) in vec2 aTexCoord;
-
 layout (location = 2) in float aColorMultiplier;
-
-//layout (location = 3) in vec3 aCameraPosition;
+//layout (location = 10) in vec3 aCameraPosition;
+//layout (location = 11) in vec3 aOffsetPosition;
 
 out vec2 texCoord;
 out vec4 colorMultiplier;
@@ -14,9 +12,12 @@ out vec4 colorMultiplier;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat4 transform;
 
 void main()
 {
+    //gl_Position = vec4(position, 1.0f) * transform;
+    
     vec3 aCameraPosition = vec3(0, 0, 0);
     
     float xDist = aCameraPosition.x - position.x;

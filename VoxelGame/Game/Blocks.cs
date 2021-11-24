@@ -46,6 +46,7 @@ namespace VoxelGame.Game
         public string id;
         public string name;
         public int max_stack;
+        public float hardness;
         public bool transparent;
         public string[] texture;
         public bool camera_relative;

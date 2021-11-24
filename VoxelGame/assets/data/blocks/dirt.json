@@ -2,6 +2,7 @@
   "id": "dirt",
   "name": "Dirt",
   "max_stack": 100,
+  "hardness": 0.5,
   "transparent": false,
   "texture": [
     "dirt"

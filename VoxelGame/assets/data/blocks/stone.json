@@ -2,6 +2,7 @@
   "id": "stone",
   "name": "Stone",
   "max_stack": 100,
+  "hardness": 1.5,
   "transparent": false,
   "texture": [
     "stone"

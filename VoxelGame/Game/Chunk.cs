@@ -53,6 +53,10 @@ namespace VoxelGame.Game
             direction.Normalize();
             Vector3 end = direction * length;
             
+            Console.WriteLine("----------------");
+            Console.WriteLine(new Vector3((float)Math.Round(direction.X), (float)Math.Round(direction.Y), (float)Math.Round(direction.Z)).ToString());
+            Console.WriteLine(direction.ToString());
+
             int mapX = (int)start.X;
             int mapY = (int)start.Y;
             int mapZ = (int)start.Z;
