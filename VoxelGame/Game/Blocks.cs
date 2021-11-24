@@ -5,28 +5,24 @@ using Newtonsoft.Json;
 
 namespace VoxelGame.Game
 {
-    public class Blocks
+    public static class Blocks
     {
-        public static Blocks Instance;
+        private static readonly Dictionary<string, Block> BlockList = new();
 
-        private readonly Dictionary<string, Block> _blocks = new();
-
-        public Blocks()
+        public static void Initialize()
         {
-            Instance = this;
-            _blocks = new();
             LoadBlocks();
         }
 
-        private void LoadBlocks()
+        private static void LoadBlocks()
         {
             foreach (var dataFile in Directory.GetFiles("assets/data/blocks/"))
             {
                 if (Path.GetExtension(dataFile) == ".json")
                 {
-                    LoadedBlock loadedBlock = JsonConvert.DeserializeObject<LoadedBlock>(File.ReadAllText(Path.GetFullPath(dataFile)));
+                    var loadedBlock = JsonConvert.DeserializeObject<LoadedBlock>(File.ReadAllText(Path.GetFullPath(dataFile)));
                     Block block = new(loadedBlock);
-                    _blocks.Add(block.BlockId, block);
+                    BlockList.Add(block.BlockId, block);
                 }
             }
         }
@@ -35,7 +31,7 @@ namespace VoxelGame.Game
         {
             try
             {
-                return Instance._blocks[name];
+                return BlockList[name];
             }
             catch (Exception ex)
             {

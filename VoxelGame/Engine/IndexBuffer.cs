@@ -12,8 +12,7 @@ namespace VoxelGame.Engine
         {
             _count = count;
             GL.GenBuffers(1, out _renderer);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _renderer);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, count, data, BufferUsageHint.StaticDraw);
+            SetBufferData(data, count);
         }
 
         ~IndexBuffer()
@@ -21,6 +20,13 @@ namespace VoxelGame.Engine
             Delete();
         }
 
+        public void SetBufferData(uint[] data, int count)
+        {
+            _count = count;
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _renderer);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, count, data, BufferUsageHint.StaticDraw);
+        }
+        
         public void Bind()
         {
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _renderer);

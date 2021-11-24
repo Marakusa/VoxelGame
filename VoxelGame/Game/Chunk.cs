@@ -164,12 +164,16 @@ namespace VoxelGame.Game
                     }
                 }
             }
-
+            
             GenerateMesh();
         }
 
+        private uint _indicesIndex = 0;
+        
         private void GenerateMesh()
         {
+            _indicesIndex = 0;
+            
             _tempVertices.Clear();
             _tempIndices.Clear();
 
@@ -198,17 +202,22 @@ namespace VoxelGame.Game
             _tempVertices.Clear();
             _tempIndices.Clear();
 
-            Console.WriteLine((Vertices.Length / 6).ToString());
-            Console.WriteLine((Indices.Length / 6).ToString());
-
-            Console.WriteLine(Position.ToString());
-            Console.WriteLine("----");
-
-            Vb?.Delete();
-            Ib?.Delete();
-            Vb = new VertexBuffer(Vertices, Vertices.Length * sizeof(float));
-            Ib = new IndexBuffer(Indices, Indices.Length * sizeof(uint));
-
+            if (Vb == null)
+                Vb = new VertexBuffer(Vertices, Vertices.Length * sizeof(float));
+            else
+            {
+                Vb.Unbind();
+                Vb.SetBufferData(Vertices, Vertices.Length * sizeof(float));
+            }
+            
+            if (Ib == null)
+                Ib = new IndexBuffer(Indices, Indices.Length * sizeof(uint));
+            else
+            {
+                Ib.Unbind();
+                Ib.SetBufferData(Indices, Indices.Length * sizeof(uint));
+            }
+            
             Generated?.Invoke(this, Vertices, Indices);
         }
 
@@ -229,7 +238,6 @@ namespace VoxelGame.Game
             return false;
         }
 
-        private uint _indicesIndex = 0;
         private void AddMesh(Vector3[] vertices, Vector2[] uvs, uint[] indices, int blockX, int blockY, int blockZ, FaceSide side)
         {
             int i = 0;

@@ -26,28 +26,28 @@ namespace VoxelGame.Engine
             Globals.Game = this;
         }
 
-        public Camera PlayerCamera;
+        private Camera _playerCamera;
 
         private Shader _shader;
 
         private Texture _texture;
 
-        private List<Chunk> _chunks = new();
+        private readonly List<Chunk> _chunks = new();
 
-        public int RowLength = 6;
+        private const int RowLength = 6;
 
-        public int RenderDistance = 1;
+        private const int RenderDistance = 1;
 
         protected override void OnLoad()
         {
-            Noise noise = new(1f, 1f);
-            Blocks blocks = new();
+            Noise.SetNoise(1f, 1f);
+            Blocks.Initialize();
 
             _shader = new("assets/shader.vert", "assets/shader.frag");
 
             GL.ClearColor(0.4f, 0.6f, 1.0f, 0.0f);
 
-            PlayerCamera = new(new Vector3(8f, 65f, 8f));
+            _playerCamera = new(new Vector3(8f, 65f, 8f));
             //PlayerCamera = new(new Vector3(3f, 3f, 3f));
 
             _texture = Texture.LoadFromFile("assets/atlas.png");
@@ -74,10 +74,9 @@ namespace VoxelGame.Engine
             base.OnLoad();
         }
         
-        
-
         protected override void OnRenderFrame(FrameEventArgs e)
         {
+            GL.Viewport(0, 0, Size.X, Size.Y);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             GL.UseProgram(_shader.Handle);
@@ -88,7 +87,7 @@ namespace VoxelGame.Engine
             if (x > 0f && y > 0f)
             {
                 var model = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(0.0f));
-                var view = Matrix4.LookAt(PlayerCamera.Position, PlayerCamera.Position + PlayerCamera.Front, PlayerCamera.CameraUp);
+                var view = Matrix4.LookAt(_playerCamera.Position, _playerCamera.Position + _playerCamera.Front, _playerCamera.CameraUp);
                 var projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(Camera.FieldOfView), x / y, 0.1f, 100.0f);
 
                 _shader.SetMatrix4("model", model);
@@ -112,18 +111,10 @@ namespace VoxelGame.Engine
             base.OnRenderFrame(e);
         }
 
-        private int c = 0;
-        
         private void Render(Chunk chunk)
         {
             int vao = GL.GenVertexArray();
             GL.BindVertexArray(vao);
-
-            if (c != chunk.Ib.GetCount())
-            {
-                c = chunk.Ib.GetCount();
-                Console.WriteLine((chunk.Ib.GetCount() / sizeof(uint) / 6).ToString());
-            }
 
             chunk.Vb.Bind();
             chunk.Ib.Bind();
@@ -166,15 +157,14 @@ namespace VoxelGame.Engine
             chunk.Ib.Unbind();
         }
 
-        protected override void OnResize(ResizeEventArgs e)
-        {
-            GL.Viewport(0, 0, Size.X, Size.Y);
-
-            base.OnResize(e);
-        }
-
         protected override void OnUnload()
         {
+            CursorVisible = true;
+            foreach (var chunk in _chunks)
+            {
+                chunk.Vb.Delete();
+                chunk.Ib.Delete();
+            }
             _shader.Dispose();
             base.OnUnload();
         }
@@ -185,10 +175,10 @@ namespace VoxelGame.Engine
 
             KeyboardState input = KeyboardState.GetSnapshot();
 
-            PlayerCamera.Movement(input, e);
-            PlayerCamera.Update();
+            _playerCamera.Movement(input, e);
+            _playerCamera.Update();
 
-            CursorVisible = !PlayerCamera.IsLocked;
+            CursorVisible = !_playerCamera.IsLocked;
 
             if (input.IsKeyDown(Keys.Escape))
                 Close();
@@ -198,30 +188,29 @@ namespace VoxelGame.Engine
 
         protected override void OnMouseMove(MouseMoveEventArgs e)
         {
-            if (PlayerCamera.IsLocked)
+            if (_playerCamera.IsLocked)
             {
-                PlayerCamera.Look(MousePosition);
+                _playerCamera.Look(MousePosition);
                 MousePosition = new(Size.X / 2f, Size.Y / 2f);
-                PlayerCamera.LastMousePosition = new(Size.X / 2f, Size.Y / 2f);
-                PlayerCamera.CurrentMousePosition = new(Size.X / 2f, Size.Y / 2f);
+                _playerCamera.LastMousePosition = new(Size.X / 2f, Size.Y / 2f);
+                _playerCamera.CurrentMousePosition = new(Size.X / 2f, Size.Y / 2f);
             }
             
             base.OnMouseMove(e);
         }
 
         private bool _mouseDown;
-
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
-            if (PlayerCamera.IsLocked && !_mouseDown)
+            if (_playerCamera.IsLocked && !_mouseDown)
             {
+                Console.WriteLine("----------------");
+                //Console.WriteLine(PlayerCamera.Position.ToString());
+                Console.WriteLine(new Vector3((int)_playerCamera.Front.X, (int)_playerCamera.Front.Y, (int)_playerCamera.Front.Z).ToString());
+                
                 foreach (var chunk in _chunks)
                 {
-                    /*Console.WriteLine("------------------------------------");
-                    Console.WriteLine(PlayerCamera.Position.ToString());
-                    Console.WriteLine(PlayerCamera.Front.ToString());
-                    Console.WriteLine("----------------");*/
-                    Vector3 hit = chunk.CheckRaycastHitPoint(PlayerCamera.Position, PlayerCamera.Front, 10);
+                    Vector3 hit = chunk.CheckRaycastHitPoint(_playerCamera.Position, _playerCamera.Front, 10);
                     if (hit != Vector3.NegativeInfinity)
                     {
                         chunk.DestroyBlock(hit - new Vector3(chunk.Position.X, 0, chunk.Position.Y));
@@ -231,7 +220,7 @@ namespace VoxelGame.Engine
                 _mouseDown = true;
             }
             
-            PlayerCamera.IsLocked = true;
+            _playerCamera.IsLocked = true;
             
             base.OnMouseDown(e);
         }
@@ -240,17 +229,6 @@ namespace VoxelGame.Engine
             _mouseDown = false;
             
             base.OnMouseUp(e);
-        }
-
-        public override void Close()
-        {
-            foreach (var chunk in _chunks)
-            {
-                chunk.Vb.Delete();
-                chunk.Ib.Delete();
-            }
-            CursorVisible = true;
-            base.Close();
         }
     }
 }

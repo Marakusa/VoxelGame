@@ -10,8 +10,7 @@ namespace VoxelGame.Engine
         public VertexBuffer(float[] data, int size)
         {
             GL.GenBuffers(1, out _renderer);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _renderer);
-            GL.BufferData(BufferTarget.ArrayBuffer, size, data, BufferUsageHint.StaticDraw);
+            SetBufferData(data, size);
         }
 
         ~VertexBuffer()
@@ -19,6 +18,12 @@ namespace VoxelGame.Engine
             Delete();
         }
 
+        public void SetBufferData(float[] data, int size)
+        {
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _renderer);
+            GL.BufferData(BufferTarget.ArrayBuffer, size, data, BufferUsageHint.StaticDraw);
+        }
+        
         public void Bind()
         {
             GL.BindBuffer(BufferTarget.ArrayBuffer, _renderer);
