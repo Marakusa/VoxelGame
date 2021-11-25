@@ -179,7 +179,7 @@ namespace VoxelGame.Engine
             _highlightBlock.BlockHighlightVb.Delete();
             _highlightBlock.BlockHighlightIb.Delete();
             _shader.Dispose();
-            //if (File.Exists("assets/atlas.png")) File.Delete("assets/atlas.png");
+            if (File.Exists("assets/atlas.png")) File.Delete("assets/atlas.png");
             base.OnUnload();
         }
 
