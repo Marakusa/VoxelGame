@@ -5,34 +5,18 @@ namespace VoxelGame.Game
         public readonly string BlockId;
         public readonly string BlockName;
         public readonly int MaxStack;
+        public readonly float Hardness;
         public readonly bool IsTransparent;
         public readonly BlockTexture Texture;
         public readonly bool IsRotationCameraRelative;
         public readonly bool HasGravity;
-
-        /// <summary>
-        /// Creates a block.
-        /// </summary>
-        /// <param name="blockId">Blocks id (i.e. glass_block).</param>
-        /// <param name="blockName">Blocks name (i.e. Glass Block).</param>
-        /// <param name="maxStack">Blocks maximum stack size.</param>
-        /// <param name="isTransparent">Does block have transparency.</param>
-        /// <param name="texture">Blocks textures name (i.e. glass).</param>
-        public Block(string blockId, string blockName, int maxStack, bool isTransparent, BlockTexture texture, bool isRotationCameraRelative)
-        {
-            BlockId = blockId;
-            BlockName = blockName;
-            MaxStack = maxStack;
-            IsTransparent = isTransparent;
-            Texture = texture;
-            IsRotationCameraRelative = isRotationCameraRelative;
-        }
 
         public Block(LoadedBlock loadedBlock)
         {
             BlockId = loadedBlock.id;
             BlockName = loadedBlock.name;
             MaxStack = loadedBlock.max_stack;
+            Hardness = loadedBlock.hardness;
             IsTransparent = loadedBlock.transparent;
             IsRotationCameraRelative = loadedBlock.camera_relative;
 

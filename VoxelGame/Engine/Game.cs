@@ -30,7 +30,9 @@ namespace VoxelGame.Engine
 
         private Shader _shader;
         private Texture _texture;
-        private readonly List<Chunk> _chunks = new();
+        private readonly Dictionary<Vector2, Chunk> _chunks = new();
+
+        private const int ChunkWidth = 16, ChunkHeight = 128;
 
         private const int RowLength = 6;
         private const int RenderDistance = 1;
@@ -77,6 +79,7 @@ namespace VoxelGame.Engine
         };
         private VertexBuffer _blockHighlightVb;
         private IndexBuffer _blockHighlightIb;
+        private Vector3 _blockHighlightPoint = Vector3.Zero;
         
         protected override void OnLoad()
         {
@@ -98,8 +101,8 @@ namespace VoxelGame.Engine
             {
                 for (int z = -RenderDistance; z < RenderDistance; z++)
                 {
-                    Chunk chunk = new(x * 16, z * 16, 16, 128);
-                    _chunks.Add(chunk);
+                    Chunk chunk = new(x * ChunkWidth, z * ChunkWidth, ChunkWidth, ChunkHeight);
+                    _chunks.Add(new(x * ChunkWidth, z * ChunkWidth), chunk);
                     chunk.Generate();
                 }
             }
@@ -136,10 +139,10 @@ namespace VoxelGame.Engine
 
             foreach (var chunk in _chunks)
             {
-                Render(chunk.Vb, chunk.Ib, RowLength, Vector3.Zero);
+                Render(chunk.Value.Vb, chunk.Value.Ib, RowLength, Vector3.Zero);
             }
 
-            Render(_blockHighlightVb, _blockHighlightIb, RowLength, Vector3.One);
+            Render(_blockHighlightVb, _blockHighlightIb, RowLength, _blockHighlightPoint);
 
             GL.UseProgram(0);
             
@@ -191,8 +194,8 @@ namespace VoxelGame.Engine
             CursorVisible = true;
             foreach (var chunk in _chunks)
             {
-                chunk.Vb.Delete();
-                chunk.Ib.Delete();
+                chunk.Value.Vb.Delete();
+                chunk.Value.Ib.Delete();
             }
             _blockHighlightVb.Delete();
             _blockHighlightIb.Delete();
@@ -211,10 +214,81 @@ namespace VoxelGame.Engine
 
             CursorVisible = !_playerCamera.IsLocked;
 
+            CheckBlockRaycast();
+
             if (input.IsKeyDown(Keys.Escape))
                 Close();
             
             base.OnUpdateFrame(e);
+        }
+
+        Vector3 hitPoint = Vector3.NegativeInfinity;
+        Vector2 chunkPoint = Vector2.NegativeInfinity;
+        Chunk hitChunk = null;
+
+        private Chunk GetChunkByPoint(Vector3 point)
+        {
+            Vector2 flooredPoint = new((float)Math.Floor(point.X / ChunkWidth) * ChunkWidth, (float)Math.Floor(point.Z / ChunkWidth) * ChunkWidth);
+            if (_chunks.ContainsKey(flooredPoint))
+            {
+                return _chunks[flooredPoint];
+            }
+
+            return null;
+        }
+        private void CheckBlockRaycast()
+        {
+            hitPoint = Vector3.NegativeInfinity;
+            hitChunk = null;
+            chunkPoint = Vector2.NegativeInfinity;
+            
+            Ray ray = new(_playerCamera.Position, _playerCamera.Front);
+
+            for (; ray.GetLength() <= 6f; ray.Step())
+            {
+                Vector3 rayBlockPosition = ray.GetEndPoint();
+                int x = (int)Math.Floor(rayBlockPosition.X);
+                int y = (int)Math.Floor(rayBlockPosition.Y);
+                int z = (int)Math.Floor(rayBlockPosition.Z);
+
+                Chunk chunk = GetChunkByPoint(new(x, y, z));
+                
+                if (chunk != null && chunk.HasBlock((int)Math.Floor(x - chunk.Position.X), y, (int)Math.Floor(z - chunk.Position.Y)))
+                {
+                    x = (int)Math.Floor(x - chunk.Position.X);
+                    z = (int)Math.Floor(z - chunk.Position.Y);
+                    hitPoint = new(x, y, z);
+                    hitChunk = chunk;
+                    chunkPoint = chunk.Position;
+                    break;
+                }
+            }
+            
+            _blockHighlightPoint = new Vector3((float)Math.Floor(hitPoint.X) + chunkPoint.X, (float)Math.Floor(hitPoint.Y),
+                (float)Math.Floor(hitPoint.Z) + chunkPoint.Y);
+
+            _blockHighlightVertices = new[]
+            {
+                // 0
+                0f + _blockHighlightPoint.X, 0f + _blockHighlightPoint.Y, 0f + _blockHighlightPoint.Z, 0f, 0f, 1f,
+                // 1
+                1f + _blockHighlightPoint.X, 0f + _blockHighlightPoint.Y, 0f + _blockHighlightPoint.Z, 1f, 0f, 1f,
+                // 2
+                1f + _blockHighlightPoint.X, 1f + _blockHighlightPoint.Y, 0f + _blockHighlightPoint.Z, 1f, 1f, 1f,
+                // 3
+                0f + _blockHighlightPoint.X, 1f + _blockHighlightPoint.Y, 0f + _blockHighlightPoint.Z, 0f, 1f, 1f,
+
+                // 4
+                0f + _blockHighlightPoint.X, 0f + _blockHighlightPoint.Y, 1f + _blockHighlightPoint.Z, 0f, 0f, 1f,
+                // 5
+                1f + _blockHighlightPoint.X, 0f + _blockHighlightPoint.Y, 1f + _blockHighlightPoint.Z, 1f, 0f, 1f,
+                // 6
+                1f + _blockHighlightPoint.X, 1f + _blockHighlightPoint.Y, 1f + _blockHighlightPoint.Z, 1f, 1f, 1f,
+                // 7
+                0f + _blockHighlightPoint.X, 1f + _blockHighlightPoint.Y, 1f + _blockHighlightPoint.Z, 0f, 1f, 1f
+            };
+
+            _blockHighlightVb.SetBufferData(_blockHighlightVertices, _blockHighlightVertices.Length * sizeof(float));
         }
 
         protected override void OnMouseMove(MouseMoveEventArgs e)
@@ -226,7 +300,7 @@ namespace VoxelGame.Engine
                 _playerCamera.LastMousePosition = new(Size.X / 2f, Size.Y / 2f);
                 _playerCamera.CurrentMousePosition = new(Size.X / 2f, Size.Y / 2f);
             }
-            
+
             base.OnMouseMove(e);
         }
 
@@ -235,13 +309,12 @@ namespace VoxelGame.Engine
         {
             if (_playerCamera.IsLocked && !_mouseDown)
             {
-                foreach (var chunk in _chunks)
+                if (hitChunk != null && hitPoint != Vector3.NegativeInfinity)
                 {
-                    Vector3 hit = chunk.CheckRaycastHitPoint(_playerCamera.Position, _playerCamera.Front, 10);
-                    if (hit != Vector3.NegativeInfinity)
-                    {
-                        chunk.DestroyBlock(hit - new Vector3(chunk.Position.X, 0, chunk.Position.Y));
-                    }
+                    int x = (int)Math.Floor(hitPoint.X);
+                    int y = (int)Math.Floor(hitPoint.Y);
+                    int z = (int)Math.Floor(hitPoint.Z);
+                    hitChunk.DestroyBlock(x, y, z);
                 }
                 
                 _mouseDown = true;

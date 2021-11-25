@@ -1,5 +1,3 @@
-using OpenTK.Graphics.OpenGL4;
-
 namespace VoxelGame.Engine
 {
     public class Renderer
