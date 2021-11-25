@@ -10,11 +10,11 @@ namespace VoxelGame.Engine
     {
         public readonly int Handle;
 
-        public static Texture LoadFromFile(string path)
+        public static Texture LoadFromFile(string path, TextureUnit unit)
         {
             int handle = GL.GenTexture();
 
-            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.ActiveTexture(unit);
             GL.BindTexture(TextureTarget.Texture2D, handle);
 
             Image<Rgba32> image = Image.Load<Rgba32>(path);

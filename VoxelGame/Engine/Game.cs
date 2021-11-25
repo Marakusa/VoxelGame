@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -29,80 +30,71 @@ namespace VoxelGame.Engine
         private Camera _playerCamera;
 
         private Shader _shader;
-        private Texture _texture;
+        private Shader _uiShader;
+        private Texture _worldTexture;
+        private Texture _uiTexture;
         
         private const int RowLength = 6;
 
-        private float[] _blockHighlightVertices =
-        {
-            // 0
-            0f, 0f, 0f, 0f, 0f, 1f,
-            // 1
-            1f, 0f, 0f, 1f, 0f, 1f,
-            // 2
-            1f, 1f, 0f, 1f, 1f, 1f,
-            // 3
-            0f, 1f, 0f, 0f, 1f, 1f,
-            
-            // 4
-            0f, 0f, 1f, 0f, 0f, 1f,
-            // 5
-            1f, 0f, 1f, 1f, 0f, 1f,
-            // 6
-            1f, 1f, 1f, 1f, 1f, 1f,
-            // 7
-            0f, 1f, 1f, 0f, 1f, 1f
-        };
-        private uint[] _blockHighlightIndices =
-        {
-            2, 1, 0,
-            3, 2, 0,
-            
-            3, 0, 4,
-            7, 3, 4,
-            
-            7, 4, 5,
-            6, 7, 5,
-            
-            6, 5, 1,
-            2, 6, 1,
-            
-            6, 2, 3,
-            7, 6, 3,
-            
-            0, 1, 5,
-            0, 5, 4,
-        };
-        private VertexBuffer _blockHighlightVb;
-        private IndexBuffer _blockHighlightIb;
-        private Vector3 _blockHighlightPoint = Vector3.Zero;
-        
+        private HighlightBlock _highlightBlock;
+
         protected override void OnLoad()
         {
             Noise.SetNoise(1f, 1f);
             Blocks.Initialize();
-
-            _shader = new("assets/shader.vert", "assets/shader.frag");
 
             GL.ClearColor(0.4f, 0.6f, 1.0f, 0.0f);
 
             _player = new();
             _playerCamera = new(new Vector3(8f, 65f, 8f));
 
-            _texture = Texture.LoadFromFile("assets/atlas.png");
-            _texture.Use(TextureUnit.Texture0);
-
-            _shader.SetInt("texture0", 0);
-
-            ChunkManager.Initialize();
+            InitializeShaders();
             
-            _blockHighlightVb = new(_blockHighlightVertices, _blockHighlightVertices.Length * sizeof(float));
-            _blockHighlightIb = new(_blockHighlightIndices, _blockHighlightIndices.Length * sizeof(uint));
+            ChunkManager.Initialize();
+
+            _highlightBlock = new();
+            _highlightBlock.BlockHighlightVb = new(_highlightBlock.BlockHighlightVertices, _highlightBlock.BlockHighlightVertices.Length * sizeof(float));
+            _highlightBlock.BlockHighlightIb = new(_highlightBlock.BlockHighlightIndices, _highlightBlock.BlockHighlightIndices.Length * sizeof(uint));
+            
+            InitializeUI();
             
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.DepthTest);
 
             base.OnLoad();
+        }
+
+        private void InitializeShaders()
+        {
+            _shader = new("assets/shaders/shader.vert", "assets/shaders/shader.frag");
+            _worldTexture = Texture.LoadFromFile("assets/atlas.png", TextureUnit.Texture0);
+            _worldTexture.Use(TextureUnit.Texture0);
+            _shader.SetInt("texture0", 0);
+            
+            _uiShader = new("assets/shaders/ui_shader.vert", "assets/shaders/ui_shader.frag");
+            _uiTexture = Texture.LoadFromFile("assets/textures/gui/player.png", TextureUnit.Texture1);
+            _uiTexture.Use(TextureUnit.Texture1);
+            _uiShader.SetInt("texture1", 1);
+        }
+
+        private VertexBuffer _uiVb;
+        private IndexBuffer _uiIb;
+        private float[] _uiTest =
+        {
+            0, 0, 0, 0, 1,
+            0, 1, 0, 1, 1,
+            1, 0, 1, 0, 1,
+            1, 1, 1, 1, 1
+        };
+        private uint[] _uiTestIndices =
+        {
+            2, 1, 0,
+            3, 1, 2
+        };
+        private void InitializeUI()
+        {
+            _uiVb = new(_uiTest, _uiTest.Length * sizeof(float));
+            _uiIb = new(_uiTestIndices, _uiTestIndices.Length);
         }
         
         protected override void OnRenderFrame(FrameEventArgs e)
@@ -128,10 +120,13 @@ namespace VoxelGame.Engine
 
             foreach (var chunk in ChunkManager.GetChunks())
             {
-                Render(chunk.Value.Vb, chunk.Value.Ib, RowLength);
+                Render(chunk.Value.Vb, chunk.Value.Ib);
             }
 
-            Render(_blockHighlightVb, _blockHighlightIb, RowLength);
+            Render(_highlightBlock.BlockHighlightVb, _highlightBlock.BlockHighlightIb);
+
+            GL.UseProgram(_uiShader.Handle);
+            Render(_uiVb, _uiIb, true);
 
             GL.UseProgram(0);
             
@@ -144,25 +139,27 @@ namespace VoxelGame.Engine
             base.OnRenderFrame(e);
         }
 
-        private void Render(VertexBuffer vb, IndexBuffer ib, int rowLength)
+        private void Render(VertexBuffer vb, IndexBuffer ib, bool ui = false)
         {
             int vao = GL.GenVertexArray();
             GL.BindVertexArray(vao);
 
             vb.Bind();
             ib.Bind();
+
+            int row = ui ? 5 : RowLength;
             
             var positionLocation = _shader.GetAttribLocation("position");
             GL.EnableVertexAttribArray(positionLocation);
-            GL.VertexAttribPointer(positionLocation, 3, VertexAttribPointerType.Float, false, rowLength * sizeof(float), 0);
+            GL.VertexAttribPointer(positionLocation, ui ? 2 : 3, VertexAttribPointerType.Float, false, row * sizeof(float), 0 * sizeof(float));
             
             int texCoordLocation = _shader.GetAttribLocation("aTexCoord");
             GL.EnableVertexAttribArray(texCoordLocation);
-            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, rowLength * sizeof(float), 3 * sizeof(float));
+            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, row * sizeof(float), (ui ? 2 : 3) * sizeof(float));
             
             int colorMultiplier = _shader.GetAttribLocation("aColorMultiplier");
             GL.EnableVertexAttribArray(colorMultiplier);
-            GL.VertexAttribPointer(colorMultiplier, 1, VertexAttribPointerType.Float, false, rowLength * sizeof(float), 5 * sizeof(float));
+            GL.VertexAttribPointer(colorMultiplier, 1, VertexAttribPointerType.Float, false, row * sizeof(float), (ui ? 4 : 5) * sizeof(float));
             
             GL.DrawElements(PrimitiveType.Triangles, ib.GetCount(), DrawElementsType.UnsignedInt, 0);
 
@@ -179,9 +176,10 @@ namespace VoxelGame.Engine
         {
             CursorVisible = true;
             ChunkManager.DeleteChunkBuffers();
-            _blockHighlightVb.Delete();
-            _blockHighlightIb.Delete();
+            _highlightBlock.BlockHighlightVb.Delete();
+            _highlightBlock.BlockHighlightIb.Delete();
             _shader.Dispose();
+            //if (File.Exists("assets/atlas.png")) File.Delete("assets/atlas.png");
             base.OnUnload();
         }
 
@@ -263,31 +261,31 @@ namespace VoxelGame.Engine
                 }
             }
             
-            _blockHighlightPoint = new Vector3((float)Math.Floor(_hitPoint.X) + _chunkPoint.X, (float)Math.Floor(_hitPoint.Y),
+            _highlightBlock.BlockHighlightPoint = new Vector3((float)Math.Floor(_hitPoint.X) + _chunkPoint.X, (float)Math.Floor(_hitPoint.Y),
                 (float)Math.Floor(_hitPoint.Z) + _chunkPoint.Y);
 
-            _blockHighlightVertices = new[]
+            _highlightBlock.BlockHighlightVertices = new[]
             {
                 // 0
-                0f + _blockHighlightPoint.X, 0f + _blockHighlightPoint.Y, 0f + _blockHighlightPoint.Z, 0f, 0f, 1f,
+                0f + _highlightBlock.BlockHighlightPoint.X, 0f + _highlightBlock.BlockHighlightPoint.Y, 0f + _highlightBlock.BlockHighlightPoint.Z, 0f, 0f, 1f,
                 // 1
-                1f + _blockHighlightPoint.X, 0f + _blockHighlightPoint.Y, 0f + _blockHighlightPoint.Z, 1f, 0f, 1f,
+                1f + _highlightBlock.BlockHighlightPoint.X, 0f + _highlightBlock.BlockHighlightPoint.Y, 0f + _highlightBlock.BlockHighlightPoint.Z, 1f, 0f, 1f,
                 // 2
-                1f + _blockHighlightPoint.X, 1f + _blockHighlightPoint.Y, 0f + _blockHighlightPoint.Z, 1f, 1f, 1f,
+                1f + _highlightBlock.BlockHighlightPoint.X, 1f + _highlightBlock.BlockHighlightPoint.Y, 0f + _highlightBlock.BlockHighlightPoint.Z, 1f, 1f, 1f,
                 // 3
-                0f + _blockHighlightPoint.X, 1f + _blockHighlightPoint.Y, 0f + _blockHighlightPoint.Z, 0f, 1f, 1f,
+                0f + _highlightBlock.BlockHighlightPoint.X, 1f + _highlightBlock.BlockHighlightPoint.Y, 0f + _highlightBlock.BlockHighlightPoint.Z, 0f, 1f, 1f,
 
                 // 4
-                0f + _blockHighlightPoint.X, 0f + _blockHighlightPoint.Y, 1f + _blockHighlightPoint.Z, 0f, 0f, 1f,
+                0f + _highlightBlock.BlockHighlightPoint.X, 0f + _highlightBlock.BlockHighlightPoint.Y, 1f + _highlightBlock.BlockHighlightPoint.Z, 0f, 0f, 1f,
                 // 5
-                1f + _blockHighlightPoint.X, 0f + _blockHighlightPoint.Y, 1f + _blockHighlightPoint.Z, 1f, 0f, 1f,
+                1f + _highlightBlock.BlockHighlightPoint.X, 0f + _highlightBlock.BlockHighlightPoint.Y, 1f + _highlightBlock.BlockHighlightPoint.Z, 1f, 0f, 1f,
                 // 6
-                1f + _blockHighlightPoint.X, 1f + _blockHighlightPoint.Y, 1f + _blockHighlightPoint.Z, 1f, 1f, 1f,
+                1f + _highlightBlock.BlockHighlightPoint.X, 1f + _highlightBlock.BlockHighlightPoint.Y, 1f + _highlightBlock.BlockHighlightPoint.Z, 1f, 1f, 1f,
                 // 7
-                0f + _blockHighlightPoint.X, 1f + _blockHighlightPoint.Y, 1f + _blockHighlightPoint.Z, 0f, 1f, 1f
+                0f + _highlightBlock.BlockHighlightPoint.X, 1f + _highlightBlock.BlockHighlightPoint.Y, 1f + _highlightBlock.BlockHighlightPoint.Z, 0f, 1f, 1f
             };
 
-            _blockHighlightVb.SetBufferData(_blockHighlightVertices, _blockHighlightVertices.Length * sizeof(float));
+            _highlightBlock.BlockHighlightVb.SetBufferData(_highlightBlock.BlockHighlightVertices, _highlightBlock.BlockHighlightVertices.Length * sizeof(float));
         }
 
         private bool LineLineIntersection(out Vector3 intersection, Vector3 linePoint1,
