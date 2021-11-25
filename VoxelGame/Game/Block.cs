@@ -2,6 +2,7 @@ namespace VoxelGame.Game
 {
     public class Block : Item
     {
+        public int BlockId;
         public readonly float Hardness;
         public readonly bool IsTransparent;
         public readonly BlockTexture Texture;

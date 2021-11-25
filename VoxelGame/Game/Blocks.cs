@@ -7,7 +7,7 @@ namespace VoxelGame.Game
 {
     public static class Blocks
     {
-        private static readonly Dictionary<string, Block> BlockList = new();
+        private static readonly List<Block> BlockList = new();
 
         public static void Initialize()
         {
@@ -22,7 +22,8 @@ namespace VoxelGame.Game
                 {
                     var loadedBlock = JsonConvert.DeserializeObject<LoadedBlock>(File.ReadAllText(Path.GetFullPath(dataFile)));
                     Block block = new(loadedBlock);
-                    BlockList.Add(block.ItemId, block);
+                    BlockList.Add(block);
+                    block.BlockId = BlockList.IndexOf(block);
                 }
             }
         }
@@ -31,7 +32,24 @@ namespace VoxelGame.Game
         {
             try
             {
-                return BlockList[name];
+                return BlockList.Find(f =>
+                {
+                    if (f.ItemId == name)
+                        return true;
+                    return false;
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return null;
+            }
+        }
+        public static Block Get(int id)
+        {
+            try
+            {
+                return BlockList[id];
             }
             catch (Exception ex)
             {

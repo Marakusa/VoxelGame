@@ -19,7 +19,22 @@ namespace VoxelGame.Game
         
         public static int GetNoise(int x, int y)
         {
-            return (int)Math.Round(_noise.GetNoise(x, y) * 5f * _noiseSize + 60f);
+            float noise = 0f;
+            
+            float[] noiseLayers =
+            {
+                _noise.GetNoise(x / 4f, y / 4f),
+                _noise.GetNoise(x + 16f / 2f, y + 16f * 2f),
+                _noise.GetNoise(x - 16f / 4f * 3f, y - 16f / 4f * 3f),
+                _noise.GetNoise(x + 32f, y + 32f),
+                _noise.GetNoise(x - 32f / 4f * 5f, y - 32f / 4f * 5f),
+                _noise.GetNoise(x * 10f, y * 10f) / 10f
+            };
+            
+            foreach (float layer in noiseLayers)
+                noise += layer;
+            
+            return (int)Math.Round(noise * 2f * _noiseSize + 60f);
         }
         
         public static int[,] GetChunkNoise(int locationX, int locationY)
