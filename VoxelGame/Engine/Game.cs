@@ -226,10 +226,9 @@ namespace VoxelGame.Engine
         private Chunk GetChunkByPoint(Vector3 point)
         {
             Vector2 flooredPoint = new((float)Math.Floor(point.X / ChunkWidth) * ChunkWidth, (float)Math.Floor(point.Z / ChunkWidth) * ChunkWidth);
+            
             if (_chunks.ContainsKey(flooredPoint))
-            {
                 return _chunks[flooredPoint];
-            }
 
             return null;
         }
