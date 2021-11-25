@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -30,12 +29,8 @@ namespace VoxelGame.Engine
 
         private Shader _shader;
         private Texture _texture;
-        private readonly Dictionary<Vector2, Chunk> _chunks = new();
-
-        private const int ChunkWidth = 16, ChunkHeight = 128;
-
+        
         private const int RowLength = 6;
-        private const int RenderDistance = 1;
 
         private float[] _blockHighlightVertices =
         {
@@ -97,16 +92,8 @@ namespace VoxelGame.Engine
 
             _shader.SetInt("texture0", 0);
 
-            for (int x = -RenderDistance; x < RenderDistance; x++)
-            {
-                for (int z = -RenderDistance; z < RenderDistance; z++)
-                {
-                    Chunk chunk = new(x * ChunkWidth, z * ChunkWidth, ChunkWidth, ChunkHeight);
-                    _chunks.Add(new(x * ChunkWidth, z * ChunkWidth), chunk);
-                    chunk.Generate();
-                }
-            }
-
+            ChunkManager.Initialize();
+            
             _blockHighlightVb = new(_blockHighlightVertices, _blockHighlightVertices.Length * sizeof(float));
             _blockHighlightIb = new(_blockHighlightIndices, _blockHighlightIndices.Length * sizeof(uint));
             
@@ -137,7 +124,7 @@ namespace VoxelGame.Engine
                 _shader.SetMatrix4("projection", projection);
             }
 
-            foreach (var chunk in _chunks)
+            foreach (var chunk in ChunkManager.GetChunks())
             {
                 Render(chunk.Value.Vb, chunk.Value.Ib, RowLength);
             }
@@ -189,11 +176,7 @@ namespace VoxelGame.Engine
         protected override void OnUnload()
         {
             CursorVisible = true;
-            foreach (var chunk in _chunks)
-            {
-                chunk.Value.Vb.Delete();
-                chunk.Value.Ib.Delete();
-            }
+            ChunkManager.DeleteChunkBuffers();
             _blockHighlightVb.Delete();
             _blockHighlightIb.Delete();
             _shader.Dispose();
@@ -220,18 +203,10 @@ namespace VoxelGame.Engine
         }
 
         private Vector3 _hitPoint = Vector3.NegativeInfinity;
+        private Vector3 _lastHitPoint = Vector3.NegativeInfinity;
         private Vector2 _chunkPoint = Vector2.NegativeInfinity;
         private Chunk _hitChunk;
 
-        private Chunk GetChunkByPoint(Vector3 point)
-        {
-            Vector2 flooredPoint = new((float)Math.Floor(point.X / ChunkWidth) * ChunkWidth, (float)Math.Floor(point.Z / ChunkWidth) * ChunkWidth);
-            
-            if (_chunks.ContainsKey(flooredPoint))
-                return _chunks[flooredPoint];
-
-            return null;
-        }
         private void CheckBlockRaycast()
         {
             _hitPoint = Vector3.NegativeInfinity;
@@ -247,15 +222,22 @@ namespace VoxelGame.Engine
                 int y = (int)Math.Floor(rayBlockPosition.Y);
                 int z = (int)Math.Floor(rayBlockPosition.Z);
 
-                Chunk chunk = GetChunkByPoint(new(x, y, z));
+                Chunk chunk = ChunkManager.GetChunkByPoint(new(x, y, z));
                 
                 if (chunk != null && chunk.HasBlock((int)Math.Floor(x - chunk.Position.X), y, (int)Math.Floor(z - chunk.Position.Y)))
                 {
                     x = (int)Math.Floor(x - chunk.Position.X);
                     z = (int)Math.Floor(z - chunk.Position.Y);
                     _hitPoint = new(x, y, z);
+                    _lastHitPoint = ray.GetLastPoint();
                     _hitChunk = chunk;
                     _chunkPoint = chunk.Position;
+
+                    //Vector3 v = ray.GetLastPoint() - rayBlockPosition;
+                    //v.Normalize();
+                    //Console.WriteLine(ray.GetLastPoint().ToString());
+                    //Console.WriteLine(rayBlockPosition.ToString());
+
                     break;
                 }
             }
@@ -287,6 +269,27 @@ namespace VoxelGame.Engine
             _blockHighlightVb.SetBufferData(_blockHighlightVertices, _blockHighlightVertices.Length * sizeof(float));
         }
 
+        private bool LineLineIntersection(out Vector3 intersection, Vector3 linePoint1,
+            Vector3 lineVec1, Vector3 linePoint2, Vector3 lineVec2)
+        {
+            Vector3 lineVec3 = linePoint2 - linePoint1;
+            Vector3 crossVec1And2 = Vector3.Cross(lineVec1, lineVec2);
+            Vector3 crossVec3And2 = Vector3.Cross(lineVec3, lineVec2);
+
+            float planarFactor = Vector3.Dot(lineVec3, crossVec1And2);
+
+            if (Math.Abs(planarFactor) < 0.0001f
+                && crossVec1And2.LengthSquared > 0.0001f)
+            {
+                float s = Vector3.Dot(crossVec3And2, crossVec1And2) / crossVec1And2.LengthSquared;
+                intersection = linePoint1 + (lineVec1 * s);
+                return true;
+            }
+
+            intersection = Vector3.Zero;
+            return false;
+        }
+
         protected override void OnMouseMove(MouseMoveEventArgs e)
         {
             if (_playerCamera.IsLocked)
@@ -307,10 +310,62 @@ namespace VoxelGame.Engine
             {
                 if (_hitChunk != null && _hitPoint != Vector3.NegativeInfinity)
                 {
-                    int x = (int)Math.Floor(_hitPoint.X);
-                    int y = (int)Math.Floor(_hitPoint.Y);
-                    int z = (int)Math.Floor(_hitPoint.Z);
-                    _hitChunk.DestroyBlock(x, y, z);
+                    if (e.Button == MouseButton.Left)
+                    {
+                        int x = (int)Math.Floor(_hitPoint.X);
+                        int y = (int)Math.Floor(_hitPoint.Y);
+                        int z = (int)Math.Floor(_hitPoint.Z);
+                        _hitChunk.DestroyBlock(x, y, z);
+
+                        // TODO: Fix neighbor chunk faces on break
+                        /*var neighbor = ChunkManager.GetChunkByPoint(new(x - 1, y, z));
+                        if (neighbor != null && neighbor != _hitChunk)
+                            neighbor.RegenerateMesh();
+                        
+                        neighbor = ChunkManager.GetChunkByPoint(new(x + 1, y, z));
+                        if (neighbor != null && neighbor != _hitChunk)
+                            neighbor.RegenerateMesh();
+                        
+                        neighbor = ChunkManager.GetChunkByPoint(new(x, y, z - 1));
+                        if (neighbor != null && neighbor != _hitChunk)
+                            neighbor.RegenerateMesh();
+                        
+                        neighbor = ChunkManager.GetChunkByPoint(new(x, y, z + 1));
+                        if (neighbor != null && neighbor != _hitChunk)
+                            neighbor.RegenerateMesh();*/
+                    }
+                    else if (e.Button == MouseButton.Right)
+                    {
+                        int x = (int)Math.Floor(_lastHitPoint.X - _hitPoint.X);
+                        int y = (int)Math.Floor(_lastHitPoint.Y - _hitPoint.Y);
+                        int z = (int)Math.Floor(_lastHitPoint.Z - _hitPoint.Z);
+
+                        if (x == 1 && y != 1)
+                        {
+                            x = 1;
+                            y = 0;
+                            z = 0;
+                        }
+                        if (x == -1 && y != 1)
+                        {
+                            x = -1;
+                            y = 0;
+                            z = 0;
+                        }
+
+                        x += (int)Math.Floor(_hitPoint.X);
+                        y += (int)Math.Floor(_hitPoint.Y);
+                        z += (int)Math.Floor(_hitPoint.Z);
+                        
+                        Chunk chunk = ChunkManager.GetChunkByPoint(new(x, y, z));
+                
+                        if (chunk != null)
+                        {
+                            x = (int)Math.Floor(x - chunk.Position.X);
+                            z = (int)Math.Floor(z - chunk.Position.Y);
+                            _hitChunk.PlaceBlock(x, y, z, Blocks.Get("sand"));
+                        }
+                    }
                 }
                 
                 _mouseDown = true;

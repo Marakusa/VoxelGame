@@ -46,6 +46,23 @@ namespace VoxelGame.Game
             }
         }
 
+        public void PlaceBlock(int x, int y, int z, Block b)
+        {
+            if (x >= 0 && y >= 0 && z >= 0
+                && x < Width && y < Height && z < Width
+                && _blocks[x, y, z] == null)
+            {
+                _blocks[x, y, z] = b;
+                
+                GenerateMesh();
+            }
+        }
+
+        public void RegenerateMesh()
+        {
+            GenerateMesh();
+        }
+
         public void Generate()
         {
             var noiseData = Noise.GetChunkNoise((int)Math.Round(Position.X), (int)Math.Round(Position.Y));
@@ -143,13 +160,17 @@ namespace VoxelGame.Game
             if (x >= 0 && y >= 0 && z >= 0 && x < Width && y < Height && z < Width)
                 return _blocks[x, y, z] != null && _blocks[x, y, z].BlockId != "air";
             
-            if ((x >= -1 && y >= 0 && z >= -1) || (x <= Width && y < Height && z <= Width))
-            {
-                int noiseY = Noise.GetNoise(x + (int)Math.Round(Position.X), z + (int)Math.Round(Position.Y));
-                return noiseY >= y;
-            }
+            int cx = (int)Math.Floor(x + Position.X);
+            int cy = y;
+            int cz = (int)Math.Floor(z + Position.Y);
+                
+            var c = ChunkManager.GetChunkByPoint(new(cx, cy, cz));
 
-            return false;
+            if (c != null)
+                return c._blocks[cx - (int)Math.Floor(c.Position.X), cy, cz - (int)Math.Floor(c.Position.Y)] != null && c._blocks[cx - (int)Math.Floor(c.Position.X), cy, cz - (int)Math.Floor(c.Position.Y)].BlockId != "air";
+                
+            int noiseY = Noise.GetNoise(x + (int)Math.Round(Position.X), z + (int)Math.Round(Position.Y));
+            return noiseY >= y;
         }
 
         private void AddMesh(Vector3[] vertices, Vector2[] uvs, uint[] indices, int blockX, int blockY, int blockZ, FaceSide side)

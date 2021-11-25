@@ -26,6 +26,13 @@ namespace VoxelGame.Engine
         {
             return _start + _direction * _currentStep;
         }
+        public Vector3 GetLastPoint()
+        {
+            if ((_currentStep - _stepLength) >= 0)
+                return _start + _direction * (_currentStep - _stepLength);
+
+            return _start;
+        }
 
         public void Step()
         {
