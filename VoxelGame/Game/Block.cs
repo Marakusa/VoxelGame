@@ -1,10 +1,7 @@
 namespace VoxelGame.Game
 {
-    public class Block
+    public class Block : Item
     {
-        public readonly string BlockId;
-        public readonly string BlockName;
-        public readonly int MaxStack;
         public readonly float Hardness;
         public readonly bool IsTransparent;
         public readonly BlockTexture Texture;
@@ -13,8 +10,8 @@ namespace VoxelGame.Game
 
         public Block(LoadedBlock loadedBlock)
         {
-            BlockId = loadedBlock.id;
-            BlockName = loadedBlock.name;
+            ItemId = loadedBlock.id;
+            ItemName = loadedBlock.name;
             MaxStack = loadedBlock.max_stack;
             Hardness = loadedBlock.hardness;
             IsTransparent = loadedBlock.transparent;

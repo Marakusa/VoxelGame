@@ -22,7 +22,7 @@ namespace VoxelGame.Game
                 {
                     var loadedBlock = JsonConvert.DeserializeObject<LoadedBlock>(File.ReadAllText(Path.GetFullPath(dataFile)));
                     Block block = new(loadedBlock);
-                    BlockList.Add(block.BlockId, block);
+                    BlockList.Add(block.ItemId, block);
                 }
             }
         }

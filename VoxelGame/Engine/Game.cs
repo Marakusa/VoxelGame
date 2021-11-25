@@ -25,6 +25,7 @@ namespace VoxelGame.Engine
             Globals.Game = this;
         }
 
+        private Player _player;
         private Camera _playerCamera;
 
         private Shader _shader;
@@ -85,6 +86,7 @@ namespace VoxelGame.Engine
 
             GL.ClearColor(0.4f, 0.6f, 1.0f, 0.0f);
 
+            _player = new();
             _playerCamera = new(new Vector3(8f, 65f, 8f));
 
             _texture = Texture.LoadFromFile("assets/atlas.png");
@@ -193,6 +195,25 @@ namespace VoxelGame.Engine
             _playerCamera.Update();
 
             CursorVisible = !_playerCamera.IsLocked;
+
+            if (input.IsKeyDown(Keys.D1))
+                _player?.SetCurrentSlot(0);
+            else if (input.IsKeyDown(Keys.D2))
+                _player?.SetCurrentSlot(1);
+            else if (input.IsKeyDown(Keys.D3))
+                _player?.SetCurrentSlot(2);
+            else if (input.IsKeyDown(Keys.D4))
+                _player?.SetCurrentSlot(3);
+            else if (input.IsKeyDown(Keys.D5))
+                _player?.SetCurrentSlot(4);
+            else if (input.IsKeyDown(Keys.D6))
+                _player?.SetCurrentSlot(5);
+            else if (input.IsKeyDown(Keys.D7))
+                _player?.SetCurrentSlot(6);
+            else if (input.IsKeyDown(Keys.D8))
+                _player?.SetCurrentSlot(7);
+            else if (input.IsKeyDown(Keys.D9))
+                _player?.SetCurrentSlot(8);
 
             CheckBlockRaycast();
 
@@ -336,34 +357,22 @@ namespace VoxelGame.Engine
                     }
                     else if (e.Button == MouseButton.Right)
                     {
-                        int x = (int)Math.Floor(_lastHitPoint.X - _hitPoint.X);
-                        int y = (int)Math.Floor(_lastHitPoint.Y - _hitPoint.Y);
-                        int z = (int)Math.Floor(_lastHitPoint.Z - _hitPoint.Z);
+                        // TODO: Fix blocks spawning opposite side if block placed next to another block at the borders of two chunks |^    #|_<--
+                        int x = (int)Math.Floor(_lastHitPoint.X);
+                        int y = (int)Math.Floor(_lastHitPoint.Y);
+                        int z = (int)Math.Floor(_lastHitPoint.Z);
 
-                        if (x == 1 && y != 1)
-                        {
-                            x = 1;
-                            y = 0;
-                            z = 0;
-                        }
-                        if (x == -1 && y != 1)
-                        {
-                            x = -1;
-                            y = 0;
-                            z = 0;
-                        }
-
-                        x += (int)Math.Floor(_hitPoint.X);
-                        y += (int)Math.Floor(_hitPoint.Y);
-                        z += (int)Math.Floor(_hitPoint.Z);
-                        
                         Chunk chunk = ChunkManager.GetChunkByPoint(new(x, y, z));
                 
                         if (chunk != null)
                         {
-                            x = (int)Math.Floor(x - chunk.Position.X);
-                            z = (int)Math.Floor(z - chunk.Position.Y);
-                            _hitChunk.PlaceBlock(x, y, z, Blocks.Get("sand"));
+                            int cx = (int)Math.Floor(x - chunk.Position.X);
+                            int cz = (int)Math.Floor(z - chunk.Position.Y);
+
+                            var item = _player.GetHotbarItem().item;
+                            
+                            if (item != null && item.GetType() == typeof(Block))
+                                _hitChunk.PlaceBlock(cx, y, cz, (Block)item);
                         }
                     }
                 }
