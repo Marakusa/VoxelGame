@@ -1,0 +1,13 @@
+{
+  "id": "highlight",
+  "name": "",
+  "max_stack": 0,
+  "hardness": 0,
+  "transparent": true,
+  "texture": [
+    "highlight"
+  ],
+  "camera_relative": false,
+  "gravity": false,
+  "holdable": false
+}

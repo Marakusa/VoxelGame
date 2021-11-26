@@ -69,5 +69,6 @@ namespace VoxelGame.Game
         public string[] texture;
         public bool camera_relative;
         public bool gravity = false;
+        public bool holdable = true;
     }
 }

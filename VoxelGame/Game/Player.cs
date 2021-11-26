@@ -70,23 +70,26 @@ namespace VoxelGame.Game
 
         public bool AddItem(Item item)
         {
-            foreach (var slot in _inventorySlots)
+            if (item.GetType() == typeof(Block) && ((Block)item).Holdable)
             {
-                InventorySlot s = GetSlot(slot.id);
-                if (s.item == null)
+                foreach (var slot in _inventorySlots)
                 {
-                    s.item = item;
-                    s.amount = 1;
-                    return true;
-                }
+                    InventorySlot s = GetSlot(slot.id);
+                    if (s.item == null)
+                    {
+                        s.item = item;
+                        s.amount = 1;
+                        return true;
+                    }
 
-                if (s.item == item)
-                {
-                    s.amount++;
-                    return true;
+                    if (s.item == item)
+                    {
+                        s.amount++;
+                        return true;
+                    }
                 }
             }
-            
+
             return false;
         }
     }

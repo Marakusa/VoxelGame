@@ -8,6 +8,7 @@ namespace VoxelGame.Game
         public readonly BlockTexture Texture;
         public readonly bool IsRotationCameraRelative;
         public readonly bool HasGravity;
+        public readonly bool Holdable;
 
         public Block(LoadedBlock loadedBlock)
         {
@@ -17,6 +18,7 @@ namespace VoxelGame.Game
             Hardness = loadedBlock.hardness;
             IsTransparent = loadedBlock.transparent;
             IsRotationCameraRelative = loadedBlock.camera_relative;
+            Holdable = loadedBlock.holdable;
 
             switch (loadedBlock.texture.Length)
             {
