@@ -10,10 +10,10 @@ namespace VoxelGame.Engine
     {
         public static void GenerateMeshFront(float x, float y, float z, UVTransform uv, MeshGenerationHandler callback)
         {
-            float ux = uv.UvX;
-            float uy = uv.UvY;
-            float uw = uv.UvW;
-            float uh = uv.UvH;
+            float ux = uv.UvX + 0.0625f / (1f / uv.UvW);
+            float uy = uv.UvY + 0.0625f / (1f / uv.UvW);
+            float uw = uv.UvW - 0.0625f / (1f / uv.UvW) * 2f;
+            float uh = uv.UvH - 0.0625f / (1f / uv.UvH) * 2f;
 
             Vector3[] points =
             {
@@ -39,10 +39,10 @@ namespace VoxelGame.Engine
         }
         public static void GenerateMeshBack(float x, float y, float z, UVTransform uv, MeshGenerationHandler callback)
         {
-            float ux = uv.UvX;
-            float uy = uv.UvY;
-            float uw = uv.UvW;
-            float uh = uv.UvH;
+            float ux = uv.UvX + 0.0625f / (1f / uv.UvW);
+            float uy = uv.UvY + 0.0625f / (1f / uv.UvW);
+            float uw = uv.UvW - 0.0625f / (1f / uv.UvW) * 2f;
+            float uh = uv.UvH - 0.0625f / (1f / uv.UvH) * 2f;
 
             z += 1;
 
@@ -70,10 +70,10 @@ namespace VoxelGame.Engine
         }
         public static void GenerateMeshRight(float x, float y, float z, UVTransform uv, MeshGenerationHandler callback)
         {
-            float ux = uv.UvX;
-            float uy = uv.UvY;
-            float uw = uv.UvW;
-            float uh = uv.UvH;
+            float ux = uv.UvX + 0.0625f / (1f / uv.UvW);
+            float uy = uv.UvY + 0.0625f / (1f / uv.UvW);
+            float uw = uv.UvW - 0.0625f / (1f / uv.UvW) * 2f;
+            float uh = uv.UvH - 0.0625f / (1f / uv.UvH) * 2f;
 
             x += 1;
 
@@ -101,10 +101,10 @@ namespace VoxelGame.Engine
         }
         public static void GenerateMeshLeft(float x, float y, float z, UVTransform uv, MeshGenerationHandler callback)
         {
-            float ux = uv.UvX;
-            float uy = uv.UvY;
-            float uw = uv.UvW;
-            float uh = uv.UvH;
+            float ux = uv.UvX + 0.0625f / (1f / uv.UvW);
+            float uy = uv.UvY + 0.0625f / (1f / uv.UvW);
+            float uw = uv.UvW - 0.0625f / (1f / uv.UvW) * 2f;
+            float uh = uv.UvH - 0.0625f / (1f / uv.UvH) * 2f;
 
             Vector3[] points =
             {
@@ -130,10 +130,10 @@ namespace VoxelGame.Engine
         }
         public static void GenerateMeshTop(float x, float y, float z, UVTransform uv, MeshGenerationHandler callback)
         {
-            float ux = uv.UvX;
-            float uy = uv.UvY;
-            float uw = uv.UvW;
-            float uh = uv.UvH;
+            float ux = uv.UvX + 0.0625f / (1f / uv.UvW);
+            float uy = uv.UvY + 0.0625f / (1f / uv.UvW);
+            float uw = uv.UvW - 0.0625f / (1f / uv.UvW) * 2f;
+            float uh = uv.UvH - 0.0625f / (1f / uv.UvH) * 2f;
 
             y += 1;
 
@@ -161,10 +161,10 @@ namespace VoxelGame.Engine
         }
         public static void GenerateMeshBottom(float x, float y, float z, UVTransform uv, MeshGenerationHandler callback)
         {
-            float ux = uv.UvX;
-            float uy = uv.UvY;
-            float uw = uv.UvW;
-            float uh = uv.UvH;
+            float ux = uv.UvX + 0.0625f / (1f / uv.UvW);
+            float uy = uv.UvY + 0.0625f / (1f / uv.UvW);
+            float uw = uv.UvW - 0.0625f / (1f / uv.UvW) * 2f;
+            float uh = uv.UvH - 0.0625f / (1f / uv.UvH) * 2f;
 
             Vector3[] points =
             {
