@@ -11,8 +11,6 @@ namespace VoxelGame.Game
         
         private readonly List<float> _tempVertices = new();
         private readonly List<uint> _tempIndices = new();
-        //public VertexBuffer BlockHighlightVb;
-        //public IndexBuffer BlockHighlightIb;
         public Vector3 Position = Vector3.Zero;
 
         public HighlightBlock()
@@ -28,7 +26,7 @@ namespace VoxelGame.Game
             _tempVertices.Clear();
             _tempIndices.Clear();
             
-            Block highlightBlock = Blocks.Get("dirt");
+            Block highlightBlock = Blocks.Get("highlight");
 
             float hx = Position.X,
                 hy = Position.Y,
