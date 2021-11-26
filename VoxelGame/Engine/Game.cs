@@ -22,9 +22,7 @@ namespace VoxelGame.Engine
                     API = ContextAPI.OpenGL,
                     NumberOfSamples = 8,
                 })
-        {
-            Globals.Game = this;
-        }
+        { }
 
         private Player _player;
         private Camera _playerCamera;
