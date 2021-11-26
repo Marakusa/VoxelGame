@@ -39,10 +39,8 @@ namespace VoxelGame.Game
             GenerateMeshTop(hx, hy, hz, highlightBlock.Texture.TopTexture, MeshGeneratedCallback);
             GenerateMeshBottom(hx, hy, hz, highlightBlock.Texture.BottomTexture, MeshGeneratedCallback);
 
-            mesh.SetData(_tempVertices.ToArray(), _tempIndices.ToArray());
-        
-            _tempVertices.Clear();
-            _tempIndices.Clear();
+            mesh.SetData(_tempVertices.ToArray(), _tempIndices.ToArray(), null);
+            mesh.SetBuffers();
         }
 
         private void MeshGeneratedCallback(MeshGenerationEventArgs args)

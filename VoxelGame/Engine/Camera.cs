@@ -9,6 +9,8 @@ namespace VoxelGame.Engine
     {
         public const float FieldOfView = 70.0f;
 
+        public Vector2 LastChunk = Vector2.NegativeInfinity;
+        
         public Vector3 Position;
         public Vector3 CameraTarget;
         public Vector3 CameraDirection;

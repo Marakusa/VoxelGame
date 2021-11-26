@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -48,8 +49,6 @@ namespace VoxelGame.Engine
 
             InitializeShaders();
             
-            ChunkManager.Initialize();
-
             _highlightBlock = new();
             
             //InitializeUI();
@@ -59,6 +58,8 @@ namespace VoxelGame.Engine
             GL.Enable(EnableCap.Blend);
 
             GL.BlendFunc(BlendingFactor.One, BlendingFactor.OneMinusSrcAlpha);
+
+            ChunkManager.Initialize();
 
             base.OnLoad();
         }
@@ -117,12 +118,17 @@ namespace VoxelGame.Engine
                 _shader.SetMatrix4("projection", projection);
             }
 
-            foreach (var chunk in ChunkManager.GetChunks())
+            Dictionary<Vector2, Chunk> chunks = new (ChunkManager.GetChunks());
+            foreach (var chunk in chunks)
             {
+                if (chunk.Value.GetVertexBuffer() == null)
+                    chunk.Value.SetBuffers();
+                
                 Render(chunk.Value.GetVertexBuffer(), chunk.Value.GetIndexBuffer());
             }
 
-            Render(_highlightBlock.mesh.Vb, _highlightBlock.mesh.Ib);
+            if (_highlightBlock != null && _highlightBlock.mesh != null && _highlightBlock.mesh.Vb != null && _highlightBlock.mesh.Ib != null)
+                Render(_highlightBlock.mesh.Vb, _highlightBlock.mesh.Ib);
 
             //GL.UseProgram(_uiShader.Handle);
             //Render(_uiVb, _uiIb, true);
@@ -187,6 +193,14 @@ namespace VoxelGame.Engine
 
             _playerCamera.Movement(input, e);
             _playerCamera.Update();
+
+            Vector2 currentChunk = new(_playerCamera.Position.X / ChunkManager.GetWidth(), _playerCamera.Position.Z / ChunkManager.GetWidth());
+
+            if (currentChunk != _playerCamera.LastChunk)
+            {
+                _playerCamera.LastChunk = currentChunk;
+                ChunkManager.LoadChunks(_playerCamera.Position);
+            }
 
             CursorVisible = !_playerCamera.IsLocked;
 

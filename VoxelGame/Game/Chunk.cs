@@ -15,6 +15,8 @@ namespace VoxelGame.Game
         
         private Mesh mesh;
 
+        public bool IsGenerated { get; private set; }
+
         private readonly List<float> _tempVertices = new();
         private readonly List<uint> _tempIndices = new();
 
@@ -76,6 +78,8 @@ namespace VoxelGame.Game
 
         public void Generate()
         {
+            IsGenerated = false;
+            
             var noiseData = Noise.GetChunkNoise((int)Math.Round(Position.X), (int)Math.Round(Position.Y));
             
             for (int y = 0; y < Height; y++)
@@ -106,6 +110,8 @@ namespace VoxelGame.Game
         
         private void GenerateMesh()
         {
+            IsGenerated = false;
+
             _indicesIndex = 0;
             
             _tempVertices.Clear();
@@ -130,12 +136,15 @@ namespace VoxelGame.Game
                 }
             }
 
-            mesh.SetData(_tempVertices.ToArray(), _tempIndices.ToArray());
-            
-            _tempVertices.Clear();
-            _tempIndices.Clear();
+            mesh.SetData(_tempVertices.ToArray(), _tempIndices.ToArray(), delegate(object sender, EventArgs args)
+            {
+                _tempVertices.Clear();
+                _tempIndices.Clear();
+        
+                IsGenerated = true;
 
-            Generated?.Invoke(this, mesh.Vertices, mesh.Indices);
+                Generated?.Invoke(this, mesh.Vertices, mesh.Indices);
+            });
         }
 
         private void MeshGeneratedCallback(MeshGenerationEventArgs args)
@@ -270,6 +279,10 @@ namespace VoxelGame.Game
         public IndexBuffer GetIndexBuffer()
         {
             return mesh.Ib;
+        }
+        public void SetBuffers()
+        {
+            mesh.SetBuffers();
         }
     }
 
