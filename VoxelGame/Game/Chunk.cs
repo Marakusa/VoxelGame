@@ -12,22 +12,19 @@ namespace VoxelGame.Game
         public readonly int Width = 2, Height = 128;
 
         private Block[,,] _blocks;
-
-        public float[] Vertices = Array.Empty<float>();
-        public uint[] Indices = Array.Empty<uint>();
+        
+        private Mesh mesh;
 
         private readonly List<float> _tempVertices = new();
         private readonly List<uint> _tempIndices = new();
 
-        public VertexBuffer Vb;
-        public IndexBuffer Ib;
-        
         public delegate void GeneratedHandler(object sender, float[] vertices, uint[] indices);
 
         public event GeneratedHandler Generated;
 
         public Chunk(int x, int y, int w, int h)
         {
+            mesh = new();
             Width = w;
             Height = h;
             _blocks = new Block[Width, Height, Width];
@@ -122,40 +119,33 @@ namespace VoxelGame.Game
                     {
                         if (_blocks[x, y, z] != null)
                         {
-                            if (!IsTransparentBlock(x, y, z + 1)) GenerateMeshBack(x, y, z);
-                            if (!IsTransparentBlock(x, y, z - 1)) GenerateMeshFront(x, y, z);
-                            if (!IsTransparentBlock(x + 1, y, z)) GenerateMeshRight(x, y, z);
-                            if (!IsTransparentBlock(x - 1, y, z)) GenerateMeshLeft(x, y, z);
-                            if (!IsTransparentBlock(x, y + 1, z)) GenerateMeshTop(x, y, z);
-                            if (!IsTransparentBlock(x, y - 1, z)) GenerateMeshBottom(x, y, z);
+                            if (!IsTransparentBlock(x, y, z + 1)) BlockMeshBuilder.GenerateMeshBack(x, y, z, _blocks[x, y, z].Texture.BackTexture, MeshGeneratedCallback);
+                            if (!IsTransparentBlock(x, y, z - 1)) BlockMeshBuilder.GenerateMeshFront(x, y, z, _blocks[x, y, z].Texture.FrontTexture, MeshGeneratedCallback);
+                            if (!IsTransparentBlock(x + 1, y, z)) BlockMeshBuilder.GenerateMeshRight(x, y, z, _blocks[x, y, z].Texture.RightTexture, MeshGeneratedCallback);
+                            if (!IsTransparentBlock(x - 1, y, z)) BlockMeshBuilder.GenerateMeshLeft(x, y, z, _blocks[x, y, z].Texture.LeftTexture, MeshGeneratedCallback);
+                            if (!IsTransparentBlock(x, y + 1, z)) BlockMeshBuilder.GenerateMeshTop(x, y, z, _blocks[x, y, z].Texture.TopTexture, MeshGeneratedCallback);
+                            if (!IsTransparentBlock(x, y - 1, z)) BlockMeshBuilder.GenerateMeshBottom(x, y, z, _blocks[x, y, z].Texture.BottomTexture, MeshGeneratedCallback);
                         }
                     }
                 }
             }
-            
-            Vertices = _tempVertices.ToArray();
-            Indices = _tempIndices.ToArray();
+
+            mesh.SetData(_tempVertices.ToArray(), _tempIndices.ToArray());
             
             _tempVertices.Clear();
             _tempIndices.Clear();
 
-            if (Vb == null)
-                Vb = new VertexBuffer(Vertices, Vertices.Length * sizeof(float));
-            else
-            {
-                Vb.Unbind();
-                Vb.SetBufferData(Vertices, Vertices.Length * sizeof(float));
-            }
-            
-            if (Ib == null)
-                Ib = new IndexBuffer(Indices, Indices.Length * sizeof(uint));
-            else
-            {
-                Ib.Unbind();
-                Ib.SetBufferData(Indices, Indices.Length * sizeof(uint));
-            }
-            
-            Generated?.Invoke(this, Vertices, Indices);
+            Generated?.Invoke(this, mesh.Vertices, mesh.Indices);
+        }
+
+        private void MeshGeneratedCallback(MeshGenerationEventArgs args)
+        {
+            AddMesh(args.points, args.uvs, args.indices, (int)args.x, (int)args.y, (int)args.z, args.side);
+        }
+
+        public void DeleteBuffers()
+        {
+            mesh.DeleteBuffers();
         }
 
         public bool HasBlock(int x, int y, int z)
@@ -201,7 +191,10 @@ namespace VoxelGame.Game
                     vertex.Z + (int)Math.Round(Position.Y),
                     uvs[i].X, 
                     uvs[i].Y, 
-                    lightLevel
+                    lightLevel,
+                    lightLevel,
+                    lightLevel,
+                    1.0f
                 });
                 i++;
             }
@@ -270,197 +263,13 @@ namespace VoxelGame.Game
             return Math.Clamp(lightLevel, 0f, 1f);
         }
 
-        private void GenerateMeshFront(int x, int y, int z)
+        public VertexBuffer GetVertexBuffer()
         {
-            UVTransform transform = _blocks[x, y, z].Texture.FrontTexture;
-
-            float ux = transform.UvX;
-            float uy = transform.UvY;
-            float uw = transform.UvW;
-            float uh = transform.UvH;
-
-            Vector3[] points =
-            {
-                new(0.0f + x, 1.0f + y, 0.0f + z),
-                new(1.0f + x, 0.0f + y, 0.0f + z),
-                new(0.0f + x, 0.0f + y, 0.0f + z),
-                new(1.0f + x, 1.0f + y, 0.0f + z)
-            };
-            Vector2[] uvs =
-            {
-                new(ux + uw, uy),
-                new(ux, uy + uh),
-                new(ux + uw, uy + uh),
-                new(ux, uy)
-            };
-            uint[] indices =
-            {
-                0, 1, 2,
-                0, 3, 1
-            };
-
-            AddMesh(points, uvs, indices, x, y, z, FaceSide.Front);
+            return mesh.Vb;
         }
-        private void GenerateMeshBack(int x, int y, int z)
+        public IndexBuffer GetIndexBuffer()
         {
-            UVTransform transform = _blocks[x, y, z].Texture.BackTexture;
-
-            float ux = transform.UvX;
-            float uy = transform.UvY;
-            float uw = transform.UvW;
-            float uh = transform.UvH;
-
-            z += 1;
-
-            Vector3[] points =
-            {
-                new(0.0f + x, 1.0f + y, 0.0f + z),
-                new(1.0f + x, 0.0f + y, 0.0f + z),
-                new(0.0f + x, 0.0f + y, 0.0f + z),
-                new(1.0f + x, 1.0f + y, 0.0f + z)
-            };
-            Vector2[] uvs =
-            {
-                new(ux, uy),
-                new(ux + uw, uy + uh),
-                new(ux, uy + uh),
-                new(ux + uw, uy)
-            };
-            uint[] indices =
-            {
-                3, 2, 1,
-                3, 0, 2
-            };
-
-            AddMesh(points, uvs, indices, x, y, z, FaceSide.Back);
-        }
-        private void GenerateMeshRight(int x, int y, int z)
-        {
-            UVTransform transform = _blocks[x, y, z].Texture.RightTexture;
-
-            float ux = transform.UvX;
-            float uy = transform.UvY;
-            float uw = transform.UvW;
-            float uh = transform.UvH;
-
-            x += 1;
-
-            Vector3[] points =
-            {
-                new(0.0f + x, 1.0f + y, 1.0f + z),
-                new(0.0f + x, 0.0f + y, 0.0f + z),
-                new(0.0f + x, 0.0f + y, 1.0f + z),
-                new(0.0f + x, 1.0f + y, 0.0f + z)
-            };
-            Vector2[] uvs =
-            {
-                new(ux, uy),
-                new(ux + uw, uy + uh),
-                new(ux, uy + uh),
-                new(ux + uw, uy),
-            };
-            uint[] indices =
-            {
-                3, 2, 1,
-                3, 0, 2
-            };
-
-            AddMesh(points, uvs, indices, x, y, z, FaceSide.Right);
-        }
-        private void GenerateMeshLeft(int x, int y, int z)
-        {
-            UVTransform transform = _blocks[x, y, z].Texture.LeftTexture;
-
-            float ux = transform.UvX;
-            float uy = transform.UvY;
-            float uw = transform.UvW;
-            float uh = transform.UvH;
-
-            Vector3[] points =
-            {
-                new(0.0f + x, 1.0f + y, 1.0f + z),
-                new(0.0f + x, 0.0f + y, 0.0f + z),
-                new(0.0f + x, 0.0f + y, 1.0f + z),
-                new(0.0f + x, 1.0f + y, 0.0f + z)
-            };
-            Vector2[] uvs =
-            {
-                new(ux + uw, uy),
-                new(ux, uy + uh),
-                new(ux + uw, uy + uh),
-                new(ux, uy),
-            };
-            uint[] indices =
-            {
-                0, 1, 2,
-                0, 3, 1
-            };
-
-            AddMesh(points, uvs, indices, x, y, z, FaceSide.Left);
-        }
-        private void GenerateMeshTop(int x, int y, int z)
-        {
-            UVTransform transform = _blocks[x, y, z].Texture.TopTexture;
-
-            float ux = transform.UvX;
-            float uy = transform.UvY;
-            float uw = transform.UvW;
-            float uh = transform.UvH;
-
-            y += 1;
-
-            Vector3[] points =
-            {
-                new(0.0f + x, 0.0f + y, 1.0f + z),
-                new(1.0f + x, 0.0f + y, 0.0f + z),
-                new(0.0f + x, 0.0f + y, 0.0f + z),
-                new(1.0f + x, 0.0f + y, 1.0f + z)
-            };
-            Vector2[] uvs =
-            {
-                new(ux + uw, uy),
-                new(ux, uy + uh),
-                new(ux + uw, uy + uh),
-                new(ux, uy),
-            };
-            uint[] indices =
-            {
-                0, 1, 2,
-                0, 3, 1
-            };
-
-            AddMesh(points, uvs, indices, x, y, z, FaceSide.Top);
-        }
-        private void GenerateMeshBottom(int x, int y, int z)
-        {
-            UVTransform transform = _blocks[x, y, z].Texture.BottomTexture;
-
-            float ux = transform.UvX;
-            float uy = transform.UvY;
-            float uw = transform.UvW;
-            float uh = transform.UvH;
-
-            Vector3[] points =
-            {
-                new(0.0f + x, 0.0f + y, 1.0f + z),
-                new(1.0f + x, 0.0f + y, 0.0f + z),
-                new(0.0f + x, 0.0f + y, 0.0f + z),
-                new(1.0f + x, 0.0f + y, 1.0f + z)
-            };
-            Vector2[] uvs =
-            {
-                new(ux, uy),
-                new(ux + uw, uy + uh),
-                new(ux, uy + uh),
-                new(ux + uw, uy),
-            };
-            uint[] indices =
-            {
-                3, 2, 1,
-                3, 0, 2
-            };
-
-            AddMesh(points, uvs, indices, x, y, z, FaceSide.Bottom);
+            return mesh.Ib;
         }
     }
 

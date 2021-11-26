@@ -1,87 +1,13 @@
-using System;
-using System.Collections.Generic;
+using System.Threading.Tasks;
 using OpenTK.Mathematics;
-using VoxelGame.Engine;
+using VoxelGame.Game;
 
-namespace VoxelGame.Game
+namespace VoxelGame.Engine
 {
-    public class HighlightBlock
+    public delegate void MeshGenerationHandler(MeshGenerationEventArgs args);
+    
+    public static class BlockMeshBuilder
     {
-        public Mesh mesh;
-        
-        private readonly List<float> _tempVertices = new();
-        private readonly List<uint> _tempIndices = new();
-        //public VertexBuffer BlockHighlightVb;
-        //public IndexBuffer BlockHighlightIb;
-        public Vector3 Position = Vector3.Zero;
-
-        public HighlightBlock()
-        {
-            mesh = new();
-            Generate();
-        }
-        
-        public void Generate()
-        {
-            _indicesIndex = 0;
-
-            _tempVertices.Clear();
-            _tempIndices.Clear();
-            
-            Block highlightBlock = Blocks.Get("dirt");
-
-            float hx = Position.X,
-                hy = Position.Y,
-                hz = Position.Z;
-            
-            GenerateMeshBack(hx, hy, hz, highlightBlock.Texture.BackTexture, MeshGeneratedCallback);
-            GenerateMeshFront(hx, hy, hz, highlightBlock.Texture.FrontTexture, MeshGeneratedCallback);
-            GenerateMeshRight(hx, hy, hz, highlightBlock.Texture.RightTexture, MeshGeneratedCallback);
-            GenerateMeshLeft(hx, hy, hz, highlightBlock.Texture.LeftTexture, MeshGeneratedCallback);
-            GenerateMeshTop(hx, hy, hz, highlightBlock.Texture.TopTexture, MeshGeneratedCallback);
-            GenerateMeshBottom(hx, hy, hz, highlightBlock.Texture.BottomTexture, MeshGeneratedCallback);
-
-            mesh.SetData(_tempVertices.ToArray(), _tempIndices.ToArray());
-        
-            _tempVertices.Clear();
-            _tempIndices.Clear();
-        }
-
-        private void MeshGeneratedCallback(MeshGenerationEventArgs args)
-        {
-            AddMesh(args.points, args.uvs, args.indices, args.x, args.y, args.z, args.side);
-        }
-
-        private uint _indicesIndex;
-        private void AddMesh(Vector3[] vertices, Vector2[] uvs, uint[] indices, float blockX, float blockY, float blockZ, FaceSide side)
-        {
-            int i = 0;
-            
-            foreach (var vertex in vertices)
-            {
-                _tempVertices.AddRange(new[]
-                {
-                    vertex.X, 
-                    vertex.Y, 
-                    vertex.Z,
-                    uvs[i].X, 
-                    uvs[i].Y, 
-                    1.0f,
-                    1.0f,
-                    1.0f,
-                    1.0f
-                });
-                i++;
-            }
-
-            foreach (var index in indices)
-            {
-                _tempIndices.Add(index + _indicesIndex);
-            }
-
-            _indicesIndex += 4;
-        }
-        
         public static void GenerateMeshFront(float x, float y, float z, UVTransform uv, MeshGenerationHandler callback)
         {
             float ux = uv.UvX;
@@ -91,10 +17,10 @@ namespace VoxelGame.Game
 
             Vector3[] points =
             {
-                new(-0.01f + x, 1.01f + y, -0.01f + z),
-                new(1.01f + x, -0.01f + y, -0.01f + z),
-                new(-0.01f + x, -0.01f + y, -0.01f + z),
-                new(1.01f + x, 1.01f + y, -0.01f + z)
+                new(0.0f + x, 1.0f + y, 0.0f + z),
+                new(1.0f + x, 0.0f + y, 0.0f + z),
+                new(0.0f + x, 0.0f + y, 0.0f + z),
+                new(1.0f + x, 1.0f + y, 0.0f + z)
             };
             Vector2[] uvs =
             {
@@ -122,10 +48,10 @@ namespace VoxelGame.Game
 
             Vector3[] points =
             {
-                new(-0.01f + x, 1.01f + y, 0.01f + z),
-                new(1.01f + x, -0.01f + y, 0.01f + z),
-                new(-0.01f + x, -0.01f + y, 0.01f + z),
-                new(1.01f + x, 1.01f + y, 0.01f + z)
+                new(0.0f + x, 1.0f + y, 0.0f + z),
+                new(1.0f + x, 0.0f + y, 0.0f + z),
+                new(0.0f + x, 0.0f + y, 0.0f + z),
+                new(1.0f + x, 1.0f + y, 0.0f + z)
             };
             Vector2[] uvs =
             {
@@ -261,6 +187,26 @@ namespace VoxelGame.Game
             };
 
             callback.Invoke(new(points, uvs, indices, x, y, z, FaceSide.Bottom));
+        }
+    }
+
+    public class MeshGenerationEventArgs
+    {
+        public Vector3[] points;
+        public Vector2[] uvs;
+        public uint[] indices;
+        public float x, y, z;
+        public FaceSide side;
+
+        public MeshGenerationEventArgs(Vector3[] points, Vector2[] uvs, uint[] indices, float x, float y, float z, FaceSide side)
+        {
+            this.points = points;
+            this.uvs = uvs;
+            this.indices = indices;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.side = side;
         }
     }
 }

@@ -32,7 +32,7 @@ namespace VoxelGame.Engine
         private Texture _worldTexture;
         private Texture _uiTexture;
         
-        private const int RowLength = 6;
+        private const int RowLength = 9;
 
         private HighlightBlock _highlightBlock;
 
@@ -51,10 +51,8 @@ namespace VoxelGame.Engine
             ChunkManager.Initialize();
 
             _highlightBlock = new();
-            _highlightBlock.BlockHighlightVb = new(_highlightBlock.BlockHighlightVertices, _highlightBlock.BlockHighlightVertices.Length * sizeof(float));
-            _highlightBlock.BlockHighlightIb = new(_highlightBlock.BlockHighlightIndices, _highlightBlock.BlockHighlightIndices.Length * sizeof(uint));
             
-            InitializeUI();
+            //InitializeUI();
             
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.DepthTest);
@@ -75,7 +73,7 @@ namespace VoxelGame.Engine
             _uiShader.SetInt("texture1", 1);
         }
 
-        private VertexBuffer _uiVb;
+        /*private VertexBuffer _uiVb;
         private IndexBuffer _uiIb;
         private float[] _uiTest =
         {
@@ -93,7 +91,7 @@ namespace VoxelGame.Engine
         {
             _uiVb = new(_uiTest, _uiTest.Length * sizeof(float));
             _uiIb = new(_uiTestIndices, _uiTestIndices.Length);
-        }
+        }*/
         
         protected override void OnRenderFrame(FrameEventArgs e)
         {
@@ -118,13 +116,13 @@ namespace VoxelGame.Engine
 
             foreach (var chunk in ChunkManager.GetChunks())
             {
-                Render(chunk.Value.Vb, chunk.Value.Ib);
+                Render(chunk.Value.GetVertexBuffer(), chunk.Value.GetIndexBuffer());
             }
 
-            Render(_highlightBlock.BlockHighlightVb, _highlightBlock.BlockHighlightIb);
+            Render(_highlightBlock.mesh.Vb, _highlightBlock.mesh.Ib);
 
-            GL.UseProgram(_uiShader.Handle);
-            Render(_uiVb, _uiIb, true);
+            //GL.UseProgram(_uiShader.Handle);
+            //Render(_uiVb, _uiIb, true);
 
             GL.UseProgram(0);
             
@@ -137,7 +135,7 @@ namespace VoxelGame.Engine
             base.OnRenderFrame(e);
         }
 
-        private void Render(VertexBuffer vb, IndexBuffer ib, bool ui = false)
+        private void Render(VertexBuffer vb, IndexBuffer ib)
         {
             int vao = GL.GenVertexArray();
             GL.BindVertexArray(vao);
@@ -145,20 +143,18 @@ namespace VoxelGame.Engine
             vb.Bind();
             ib.Bind();
 
-            int row = ui ? 5 : RowLength;
-            
             var positionLocation = _shader.GetAttribLocation("position");
             GL.EnableVertexAttribArray(positionLocation);
-            GL.VertexAttribPointer(positionLocation, ui ? 2 : 3, VertexAttribPointerType.Float, false, row * sizeof(float), 0 * sizeof(float));
+            GL.VertexAttribPointer(positionLocation, 3, VertexAttribPointerType.Float, false, RowLength * sizeof(float), 0 * sizeof(float));
             
             int texCoordLocation = _shader.GetAttribLocation("aTexCoord");
             GL.EnableVertexAttribArray(texCoordLocation);
-            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, row * sizeof(float), (ui ? 2 : 3) * sizeof(float));
+            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, RowLength * sizeof(float), 3 * sizeof(float));
             
-            int colorMultiplier = _shader.GetAttribLocation("aColorMultiplier");
-            GL.EnableVertexAttribArray(colorMultiplier);
-            GL.VertexAttribPointer(colorMultiplier, 1, VertexAttribPointerType.Float, false, row * sizeof(float), (ui ? 4 : 5) * sizeof(float));
-            
+            int colorMultiplierLocation = _shader.GetAttribLocation("aColorMultiplier");
+            GL.EnableVertexAttribArray(colorMultiplierLocation);
+            GL.VertexAttribPointer(colorMultiplierLocation, 4, VertexAttribPointerType.Float, false, RowLength * sizeof(float), 5 * sizeof(float));
+
             GL.DrawElements(PrimitiveType.Triangles, ib.GetCount(), DrawElementsType.UnsignedInt, 0);
 
             GL.DeleteVertexArray(vao);
@@ -174,8 +170,7 @@ namespace VoxelGame.Engine
         {
             CursorVisible = true;
             ChunkManager.DeleteChunkBuffers();
-            _highlightBlock.BlockHighlightVb.Delete();
-            _highlightBlock.BlockHighlightIb.Delete();
+            _highlightBlock.mesh.DeleteBuffers();
             _shader.Dispose();
             if (File.Exists("assets/atlas.png")) File.Delete("assets/atlas.png");
             base.OnUnload();
@@ -245,68 +240,20 @@ namespace VoxelGame.Engine
                 {
                     x = (int)Math.Floor(x - chunk.Position.X);
                     z = (int)Math.Floor(z - chunk.Position.Y);
+                    
                     _hitPoint = new(x, y, z);
                     _lastHitPoint = ray.GetLastPoint();
                     _hitChunk = chunk;
                     _chunkPoint = chunk.Position;
-
-                    //Vector3 v = ray.GetLastPoint() - rayBlockPosition;
-                    //v.Normalize();
-                    //Console.WriteLine(ray.GetLastPoint().ToString());
-                    //Console.WriteLine(rayBlockPosition.ToString());
-
+                    
                     break;
                 }
             }
             
-            _highlightBlock.BlockHighlightPoint = new Vector3((float)Math.Floor(_hitPoint.X) + _chunkPoint.X, (float)Math.Floor(_hitPoint.Y),
-                (float)Math.Floor(_hitPoint.Z) + _chunkPoint.Y);
-
-            _highlightBlock.BlockHighlightVertices = new[]
-            {
-                // 0
-                0f + _highlightBlock.BlockHighlightPoint.X, 0f + _highlightBlock.BlockHighlightPoint.Y, 0f + _highlightBlock.BlockHighlightPoint.Z, 0f, 0f, 1f,
-                // 1
-                1f + _highlightBlock.BlockHighlightPoint.X, 0f + _highlightBlock.BlockHighlightPoint.Y, 0f + _highlightBlock.BlockHighlightPoint.Z, 1f, 0f, 1f,
-                // 2
-                1f + _highlightBlock.BlockHighlightPoint.X, 1f + _highlightBlock.BlockHighlightPoint.Y, 0f + _highlightBlock.BlockHighlightPoint.Z, 1f, 1f, 1f,
-                // 3
-                0f + _highlightBlock.BlockHighlightPoint.X, 1f + _highlightBlock.BlockHighlightPoint.Y, 0f + _highlightBlock.BlockHighlightPoint.Z, 0f, 1f, 1f,
-
-                // 4
-                0f + _highlightBlock.BlockHighlightPoint.X, 0f + _highlightBlock.BlockHighlightPoint.Y, 1f + _highlightBlock.BlockHighlightPoint.Z, 0f, 0f, 1f,
-                // 5
-                1f + _highlightBlock.BlockHighlightPoint.X, 0f + _highlightBlock.BlockHighlightPoint.Y, 1f + _highlightBlock.BlockHighlightPoint.Z, 1f, 0f, 1f,
-                // 6
-                1f + _highlightBlock.BlockHighlightPoint.X, 1f + _highlightBlock.BlockHighlightPoint.Y, 1f + _highlightBlock.BlockHighlightPoint.Z, 1f, 1f, 1f,
-                // 7
-                0f + _highlightBlock.BlockHighlightPoint.X, 1f + _highlightBlock.BlockHighlightPoint.Y, 1f + _highlightBlock.BlockHighlightPoint.Z, 0f, 1f, 1f
-            };
-
-            _highlightBlock.BlockHighlightVb.SetBufferData(_highlightBlock.BlockHighlightVertices, _highlightBlock.BlockHighlightVertices.Length * sizeof(float));
+            _highlightBlock.Position = new Vector3((float)Math.Floor(_hitPoint.X) + _chunkPoint.X, (float)Math.Floor(_hitPoint.Y), (float)Math.Floor(_hitPoint.Z) + _chunkPoint.Y);
+            _highlightBlock.Generate();
         }
-
-        private bool LineLineIntersection(out Vector3 intersection, Vector3 linePoint1,
-            Vector3 lineVec1, Vector3 linePoint2, Vector3 lineVec2)
-        {
-            Vector3 lineVec3 = linePoint2 - linePoint1;
-            Vector3 crossVec1And2 = Vector3.Cross(lineVec1, lineVec2);
-            Vector3 crossVec3And2 = Vector3.Cross(lineVec3, lineVec2);
-
-            float planarFactor = Vector3.Dot(lineVec3, crossVec1And2);
-
-            if (Math.Abs(planarFactor) < 0.0001f
-                && crossVec1And2.LengthSquared > 0.0001f)
-            {
-                float s = Vector3.Dot(crossVec3And2, crossVec1And2) / crossVec1And2.LengthSquared;
-                intersection = linePoint1 + (lineVec1 * s);
-                return true;
-            }
-
-            intersection = Vector3.Zero;
-            return false;
-        }
-
+        
         protected override void OnMouseMove(MouseMoveEventArgs e)
         {
             if (_playerCamera.IsLocked)

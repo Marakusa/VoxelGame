@@ -9,7 +9,7 @@ namespace VoxelGame.Game
     {
         private static readonly Dictionary<Vector2, Chunk> Chunks = new();
         private const int ChunkWidth = 16, ChunkHeight = 128;
-        private const int RenderDistance = 8;
+        private const int RenderDistance = 2;
 
         public static void Initialize()
         {
@@ -43,8 +43,7 @@ namespace VoxelGame.Game
         {
             foreach (var chunk in Chunks)
             {
-                chunk.Value.Vb.Delete();
-                chunk.Value.Ib.Delete();
+                chunk.Value.DeleteBuffers();
             }
         }
     }
