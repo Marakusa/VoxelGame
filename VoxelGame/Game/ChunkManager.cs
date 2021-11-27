@@ -65,6 +65,7 @@ namespace VoxelGame.Game
                 }
             }
 
+            // TODO: Chunk unloading when too far away
             /*if (unloadDone)
             {
                 ThreadStart unloadThreadStart = new ThreadStart(UnloadChunks);
