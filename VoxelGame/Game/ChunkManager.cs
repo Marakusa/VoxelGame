@@ -11,7 +11,7 @@ namespace VoxelGame.Game
         private static readonly Dictionary<Vector2, Chunk> Chunks = new();
         private static Chunk GeneratingChunk;
         private const int ChunkWidth = 16, ChunkHeight = 128;
-        private const int RenderDistance = 8;
+        private const int RenderDistance = 4;
 
         private static List<Vector2> _chunksToLoad = new();
         private static List<Vector2> _chunksToUnload = new();
@@ -83,16 +83,22 @@ namespace VoxelGame.Game
                 if (!_chunksToLoad.Contains(c))
                 {
                     _chunksToLoad.Add(c);
-                    LoadChunks();
+                    
+                    if (!chunksLoading || GeneratingChunk == null)
+                        LoadChunks();
                 }
             }
         }
 
+        private static bool chunksLoading = false;
+        
         public delegate void ChunkGeneratedHandler(Chunk chunk);
         public static event ChunkGeneratedHandler Generated;
 
         private static void LoadChunks()
         {
+            chunksLoading = true;
+            
             if (GeneratingChunk == null && _chunksToLoad.Count > 0)
             {
                 var loadChunk = _chunksToLoad[0];
@@ -108,6 +114,7 @@ namespace VoxelGame.Game
                         _chunksToLoad.Remove(loadChunk);
                         GeneratingChunk = null;
                         Generated?.Invoke(Chunks[loadChunk]);
+                        chunksLoading = false;
                         LoadChunks();
                     }
                 };

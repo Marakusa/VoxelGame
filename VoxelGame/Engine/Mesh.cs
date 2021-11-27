@@ -65,16 +65,16 @@ namespace VoxelGame.Engine
 
         public void DeleteBuffers()
         {
-            Vb?.Unbind();
-            Ib?.Unbind();
-            Vb?.Delete();
-            Ib?.Delete();
+            Vb.Unbind();
+            Ib.Unbind();
+            Vb.Delete();
+            Ib.Delete();
         }
 
         public void UnbindBuffers()
         {
-            Vb?.Unbind();
-            Ib?.Unbind();
+            Vb.Unbind();
+            Ib.Unbind();
         }
     }
 }

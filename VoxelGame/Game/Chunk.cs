@@ -154,6 +154,10 @@ namespace VoxelGame.Game
                     ChunkSpawned?.Invoke(this, mesh.Vertices, mesh.Indices);
                     FirstGeneration = false;
                 }
+                else
+                {
+                    SetBuffers();
+                }
             });
         }
 

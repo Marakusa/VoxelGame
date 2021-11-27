@@ -111,7 +111,7 @@ namespace VoxelGame.Engine
             {
                 var model = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(0.0f));
                 var view = Matrix4.LookAt(_playerCamera.Position, _playerCamera.Position + _playerCamera.Front, _playerCamera.CameraUp);
-                var projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(Camera.FieldOfView), x / y, 0.1f, 100.0f);
+                var projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(Camera.FieldOfView), x / y, 0.1f, 1000.0f);
 
                 _shader.SetMatrix4("model", model);
                 _shader.SetMatrix4("view", view);
