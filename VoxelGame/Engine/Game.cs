@@ -121,10 +121,13 @@ namespace VoxelGame.Engine
             Dictionary<Vector2, Chunk> chunks = new (ChunkManager.GetChunks());
             foreach (var chunk in chunks)
             {
-                if (chunk.Value.GetVertexBuffer() == null)
-                    chunk.Value.SetBuffers();
-                
-                Render(chunk.Value.GetVertexBuffer(), chunk.Value.GetIndexBuffer());
+                if (chunk.Value.IsGenerated)
+                {
+                    if (chunk.Value.GetVertexBuffer() == null)
+                        chunk.Value.SetBuffers();
+
+                    Render(chunk.Value.GetVertexBuffer(), chunk.Value.GetIndexBuffer());
+                }
             }
 
             if (_highlightBlock != null && _highlightBlock.mesh != null && _highlightBlock.mesh.Vb != null && _highlightBlock.mesh.Ib != null)

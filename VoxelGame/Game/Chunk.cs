@@ -16,6 +16,7 @@ namespace VoxelGame.Game
         private Mesh mesh;
 
         public bool IsGenerated { get; private set; }
+        public bool FirstGeneration { get; private set; }
 
         private readonly List<float> _tempVertices = new();
         private readonly List<uint> _tempIndices = new();
@@ -23,6 +24,8 @@ namespace VoxelGame.Game
         public delegate void GeneratedHandler(object sender, float[] vertices, uint[] indices);
 
         public event GeneratedHandler Generated;
+        
+        public event GeneratedHandler ChunkSpawned;
 
         public Chunk(int x, int y, int w, int h)
         {
@@ -31,6 +34,7 @@ namespace VoxelGame.Game
             Height = h;
             _blocks = new Block[Width, Height, Width];
             Position = new(x, y);
+            FirstGeneration = true;
         }
 
         public void DestroyBlock(int x, int y, int z)
@@ -144,6 +148,12 @@ namespace VoxelGame.Game
                 IsGenerated = true;
 
                 Generated?.Invoke(this, mesh.Vertices, mesh.Indices);
+
+                if (FirstGeneration)
+                {
+                    ChunkSpawned?.Invoke(this, mesh.Vertices, mesh.Indices);
+                    FirstGeneration = false;
+                }
             });
         }
 
@@ -283,6 +293,13 @@ namespace VoxelGame.Game
         public void SetBuffers()
         {
             mesh.SetBuffers();
+        }
+
+        public void Unload()
+        {
+            IsGenerated = false;
+            var ch = ChunkManager.GetChunks();
+            ch.Remove(new(Position.X / Width, Position.Y / Width));
         }
     }
 
