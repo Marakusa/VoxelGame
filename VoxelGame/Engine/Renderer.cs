@@ -90,11 +90,10 @@ namespace VoxelGame.Engine
 
             if (Highlight != null && Highlight.mesh != null && Highlight.mesh.Vb != null && Highlight.mesh.Ib != null)
                 Render(Highlight.mesh.Vb, Highlight.mesh.Ib);
-
-            //GL.UseProgram(_uiShader.Handle);
-            //Render(_uiVb, _uiIb);
-
+            
             GL.UseProgram(0);
+
+            _uiManager.RenderElements();
             
             var error = GL.GetError();
             if (error != ErrorCode.NoError)
@@ -107,11 +106,6 @@ namespace VoxelGame.Engine
             _worldTexture = Texture.LoadFromFile("assets/atlas.png", TextureUnit.Texture0);
             _worldTexture.Use(TextureUnit.Texture0);
             _shader.SetInt("texture0", 0);
-            
-            /*_uiShader = new("assets/shaders/ui_shader.vert", "assets/shaders/ui_shader.frag");
-            _uiTexture = Texture.LoadFromFile("assets/textures/gui/player.png", TextureUnit.Texture1);
-            _uiTexture.Use(TextureUnit.Texture1);
-            _uiShader.SetInt("texture1", 1);*/
         }
         
         private void Render(VertexBuffer vb, IndexBuffer ib)
@@ -149,6 +143,7 @@ namespace VoxelGame.Engine
         {
             Highlight.mesh.DeleteBuffers();
             _shader.Dispose();
+            _uiManager.Unload();
         }
     }
 }
