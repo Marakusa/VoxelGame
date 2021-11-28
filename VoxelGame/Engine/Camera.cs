@@ -80,39 +80,39 @@ namespace VoxelGame.Engine
             }
         }
 
-        public void Movement(KeyboardState input, FrameEventArgs e)
+        public void Movement(FrameEventArgs e)
         {
-            if (input.IsKeyDown(Keys.W))
+            if (Input.IsKeyDown(Keys.W))
             {
                 Position += Front * Speed * (float)e.Time;
             }
 
-            if (input.IsKeyDown(Keys.S))
+            if (Input.IsKeyDown(Keys.S))
             {
                 Position -= Front * Speed * (float)e.Time;
             }
 
-            if (input.IsKeyDown(Keys.A))
+            if (Input.IsKeyDown(Keys.A))
             {
                 Position -= Vector3.Normalize(Vector3.Cross(Front, Up)) * Speed * (float)e.Time;
             }
 
-            if (input.IsKeyDown(Keys.D))
+            if (Input.IsKeyDown(Keys.D))
             {
                 Position += Vector3.Normalize(Vector3.Cross(Front, Up)) * Speed * (float)e.Time;
             }
 
-            if (input.IsKeyDown(Keys.Space))
+            if (Input.IsKeyDown(Keys.Space))
             {
                 Position += Up * Speed * (float)e.Time;
             }
 
-            if (input.IsKeyDown(Keys.LeftShift))
+            if (Input.IsKeyDown(Keys.LeftShift))
             {
                 Position -= Up * Speed * (float)e.Time;
             }
 
-            if (input.IsKeyDown(Keys.Escape))
+            if (Input.IsKeyDown(Keys.Escape))
             {
                 IsLocked = false;
             }

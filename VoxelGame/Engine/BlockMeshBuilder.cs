@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using OpenTK.Mathematics;
 using VoxelGame.Game;
 
