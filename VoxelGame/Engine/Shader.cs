@@ -22,7 +22,7 @@ namespace VoxelGame.Engine
             
             var vertexShader = GL.CreateShader(ShaderType.VertexShader);
             var fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-            
+
             GL.ShaderSource(vertexShader, vertexShaderSource);
             GL.ShaderSource(fragmentShader, fragmentShaderSource);
             
@@ -38,7 +38,7 @@ namespace VoxelGame.Engine
 
             _uniformLocations = new Dictionary<string, int>();
             GetUniforms();
-            
+
             GL.DetachShader(Handle, vertexShader);
             GL.DetachShader(Handle, fragmentShader);
             GL.DeleteShader(vertexShader);

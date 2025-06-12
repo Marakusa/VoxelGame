@@ -5,5 +5,6 @@ namespace VoxelGame.Game
         public string ItemId;
         public string ItemName;
         public int MaxStack;
+        public bool IsTransparent;
     }
 }

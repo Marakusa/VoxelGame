@@ -67,14 +67,10 @@ namespace VoxelGame.Engine
             }
 
             _currentMousePosition = new Vector2(MathF.Floor(mousePosition.X), MathF.Floor(mousePosition.Y));
-            Console.WriteLine(mousePosition + " : " + _currentMousePosition);
 
             float deltaX = _currentMousePosition.X - _lastMousePosition.X;
             float deltaY = _currentMousePosition.Y - _lastMousePosition.Y;
-            Console.WriteLine(_lastMousePosition + " > " + _currentMousePosition);
             _lastMousePosition = _currentMousePosition;
-
-            Console.WriteLine(deltaX + ", " + deltaY);
 
             _yaw += deltaX * Sensitivity;
             _pitch -= deltaY * Sensitivity;

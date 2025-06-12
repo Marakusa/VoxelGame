@@ -5,7 +5,7 @@ using OpenTK.Mathematics;
 
 namespace VoxelGame.Game
 {
-    public class ChunkManager
+    public static class ChunkManager
     {
         private static readonly Dictionary<Vector2, Chunk> Chunks = new();
         private static Chunk GeneratingChunk;

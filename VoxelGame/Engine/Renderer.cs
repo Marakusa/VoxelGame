@@ -76,15 +76,18 @@ namespace VoxelGame.Engine
                 _shader.SetMatrix4("projection", projection);
             }
 
-            Dictionary<Vector2, Chunk> chunks = new (ChunkManager.GetChunks());
-            foreach (var chunk in chunks)
+            if (ChunkManager.GetChunks() != null)
             {
-                if (chunk.Value.IsGenerated)
+                Dictionary<Vector2, Chunk> chunks = new(ChunkManager.GetChunks());
+                foreach (var chunk in chunks)
                 {
-                    if (chunk.Value.GetVertexBuffer() == null)
-                        chunk.Value.SetBuffers();
+                    if (chunk.Value.IsGenerated)
+                    {
+                        if (chunk.Value.GetVertexBuffer() == null)
+                            chunk.Value.SetBuffers();
 
-                    Render(chunk.Value.GetVertexBuffer(), chunk.Value.GetIndexBuffer());
+                        Render(chunk.Value.GetVertexBuffer(), chunk.Value.GetIndexBuffer());
+                    }
                 }
             }
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using SixLabors.ImageSharp;
@@ -9,14 +10,22 @@ namespace VoxelGame.Game
     {
         public static TextureManager Instance;
 
+        private const int TileSize = 16;
         private const int AtlasSize = 16;
-        private Image<Rgba32> _textureAtlas = new(16 * AtlasSize, 16 * AtlasSize);
+        private const int Dilation = 2;
+        private Image<Rgba32> _textureAtlas;
         private Dictionary<string, float[]> _textures = new();
 
         public TextureManager()
         {
             Instance = this;
             GenerateTextureAtlas();
+        }
+
+        private void NewAtlas()
+        {
+            int paddedTile = TileSize + Dilation * 2;
+            _textureAtlas = new Image<Rgba32>(AtlasSize * paddedTile, AtlasSize * paddedTile);
         }
 
         public static UVTransform GetTexture(string name)
@@ -33,7 +42,7 @@ namespace VoxelGame.Game
         private void GenerateTextureAtlas()
         {
             _textures = new();
-            _textureAtlas = new(16 * AtlasSize, 16 * AtlasSize);
+            NewAtlas();
 
             int indexX = 0;
             int indexY = 0;
@@ -46,29 +55,69 @@ namespace VoxelGame.Game
 
                     image.ProcessPixelRows(accessor =>
                     {
-                        for (int y = 0; y < accessor.Height; y++)
+                        for (int y = 0; y < TileSize; y++)
                         {
                             var row = accessor.GetRowSpan(y);
-
-                            for (int x = 0; x < accessor.Width; x++)
+                            for (int x = 0; x < TileSize; x++)
                             {
-                                byte r = row[x].R;
-                                byte g = row[x].G;
-                                byte b = row[x].B;
-                                byte a = row[x].A;
-                                _textureAtlas[x + indexX * 16, y + indexY * 16] = new Rgba32(r, g, b, a);
+                                int atlasX = x + indexX * (TileSize + 2 * Dilation) + Dilation;
+                                int atlasY = y + indexY * (TileSize + 2 * Dilation) + Dilation;
+                                _textureAtlas[atlasX, atlasY] = row[x];
+                            }
+                        }
+
+                        // Dilation (edge duplication)
+                        for (int x = 0; x < TileSize; x++)
+                        {
+                            int atlasX = x + indexX * (TileSize + 2 * Dilation) + Dilation;
+                            // Top
+                            for (int i = 0; i < Dilation; i++)
+                                _textureAtlas[atlasX, indexY * (TileSize + 2 * Dilation) + i] = _textureAtlas[atlasX, Dilation + indexY * (TileSize + 2 * Dilation)];
+                            // Bottom
+                            for (int i = 0; i < Dilation; i++)
+                                _textureAtlas[atlasX, indexY * (TileSize + 2 * Dilation) + Dilation + TileSize + i] = _textureAtlas[atlasX, indexY * (TileSize + 2 * Dilation) + Dilation + TileSize - 1];
+                        }
+
+                        for (int y = 0; y < TileSize; y++)
+                        {
+                            int atlasY = y + indexY * (TileSize + 2 * Dilation) + Dilation;
+                            // Left
+                            for (int i = 0; i < Dilation; i++)
+                                _textureAtlas[indexX * (TileSize + 2 * Dilation) + i, atlasY] = _textureAtlas[Dilation + indexX * (TileSize + 2 * Dilation), atlasY];
+                            // Right
+                            for (int i = 0; i < Dilation; i++)
+                                _textureAtlas[indexX * (TileSize + 2 * Dilation) + Dilation + TileSize + i, atlasY] = _textureAtlas[indexX * (TileSize + 2 * Dilation) + Dilation + TileSize - 1, atlasY];
+                        }
+
+                        // Corners
+                        for (int i = 0; i < Dilation; i++)
+                        {
+                            for (int j = 0; j < Dilation; j++)
+                            {
+                                // TL
+                                _textureAtlas[indexX * (TileSize + 2 * Dilation) + i, indexY * (TileSize + 2 * Dilation) + j] =
+                                    _textureAtlas[Dilation + indexX * (TileSize + 2 * Dilation), Dilation + indexY * (TileSize + 2 * Dilation)];
+                                // TR
+                                _textureAtlas[indexX * (TileSize + 2 * Dilation) + Dilation + TileSize + i, indexY * (TileSize + 2 * Dilation) + j] =
+                                    _textureAtlas[indexX * (TileSize + 2 * Dilation) + Dilation + TileSize - 1, Dilation + indexY * (TileSize + 2 * Dilation)];
+                                // BL
+                                _textureAtlas[indexX * (TileSize + 2 * Dilation) + i, indexY * (TileSize + 2 * Dilation) + Dilation + TileSize + j] =
+                                    _textureAtlas[Dilation + indexX * (TileSize + 2 * Dilation), Dilation + indexY * (TileSize + 2 * Dilation) + TileSize - 1];
+                                // BR
+                                _textureAtlas[indexX * (TileSize + 2 * Dilation) + Dilation + TileSize + i, indexY * (TileSize + 2 * Dilation) + Dilation + TileSize + j] =
+                                    _textureAtlas[Dilation + indexX * (TileSize + 2 * Dilation) + TileSize - 1, Dilation + indexY * (TileSize + 2 * Dilation) + TileSize - 1];
                             }
                         }
                     });
 
-                    const float divider = 1f / 16.0f;
-                    _textures.Add(Path.GetFileNameWithoutExtension(textureFile), new[]
-                    {
-                            indexX * divider,
-                            indexY * divider,
-                            divider,
-                            divider
-                        });
+                    int paddedSize = TileSize + 2 * Dilation;
+                    float atlasSize = AtlasSize * paddedSize;
+
+                    float u = (indexX * paddedSize + Dilation) / atlasSize;
+                    float v = (indexY * paddedSize + Dilation) / atlasSize;
+                    float size = TileSize / atlasSize;
+
+                    _textures.Add(Path.GetFileNameWithoutExtension(textureFile), [u, v, size, size]);
 
                     indexX++;
 

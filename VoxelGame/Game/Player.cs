@@ -29,7 +29,9 @@ namespace VoxelGame.Game
             AddItem(Blocks.Get("stone"));
             AddItem(Blocks.Get("sand"));
             AddItem(Blocks.Get("debug"));
-            
+            AddItem(Blocks.Get("pine_trunk"));
+            AddItem(Blocks.Get("pine_leaves"));
+
             _camera = playerCamera;
             _highlightBlock = highlightBlock;
         }

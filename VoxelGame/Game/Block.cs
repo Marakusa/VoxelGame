@@ -4,7 +4,6 @@ namespace VoxelGame.Game
     {
         public int BlockId;
         public readonly float Hardness;
-        public readonly bool IsTransparent;
         public readonly BlockTexture Texture;
         public readonly bool IsRotationCameraRelative;
         public readonly bool HasGravity;

@@ -129,12 +129,12 @@ namespace VoxelGame.Game
                     {
                         if (_blocks[x, y, z] != null)
                         {
-                            if (!IsTransparentBlock(x, y, z + 1)) BlockMeshBuilder.GenerateMeshBack(x, y, z, _blocks[x, y, z].Texture.BackTexture, MeshGeneratedCallback);
-                            if (!IsTransparentBlock(x, y, z - 1)) BlockMeshBuilder.GenerateMeshFront(x, y, z, _blocks[x, y, z].Texture.FrontTexture, MeshGeneratedCallback);
-                            if (!IsTransparentBlock(x + 1, y, z)) BlockMeshBuilder.GenerateMeshRight(x, y, z, _blocks[x, y, z].Texture.RightTexture, MeshGeneratedCallback);
-                            if (!IsTransparentBlock(x - 1, y, z)) BlockMeshBuilder.GenerateMeshLeft(x, y, z, _blocks[x, y, z].Texture.LeftTexture, MeshGeneratedCallback);
-                            if (!IsTransparentBlock(x, y + 1, z)) BlockMeshBuilder.GenerateMeshTop(x, y, z, _blocks[x, y, z].Texture.TopTexture, MeshGeneratedCallback);
-                            if (!IsTransparentBlock(x, y - 1, z)) BlockMeshBuilder.GenerateMeshBottom(x, y, z, _blocks[x, y, z].Texture.BottomTexture, MeshGeneratedCallback);
+                            if (!IsTransparentBlock(x, y, z + 1, _blocks[x, y, z])) BlockMeshBuilder.GenerateMeshBack(x, y, z, _blocks[x, y, z].Texture.BackTexture, MeshGeneratedCallback);
+                            if (!IsTransparentBlock(x, y, z - 1, _blocks[x, y, z])) BlockMeshBuilder.GenerateMeshFront(x, y, z, _blocks[x, y, z].Texture.FrontTexture, MeshGeneratedCallback);
+                            if (!IsTransparentBlock(x + 1, y, z, _blocks[x, y, z])) BlockMeshBuilder.GenerateMeshRight(x, y, z, _blocks[x, y, z].Texture.RightTexture, MeshGeneratedCallback);
+                            if (!IsTransparentBlock(x - 1, y, z, _blocks[x, y, z])) BlockMeshBuilder.GenerateMeshLeft(x, y, z, _blocks[x, y, z].Texture.LeftTexture, MeshGeneratedCallback);
+                            if (!IsTransparentBlock(x, y + 1, z, _blocks[x, y, z])) BlockMeshBuilder.GenerateMeshTop(x, y, z, _blocks[x, y, z].Texture.TopTexture, MeshGeneratedCallback);
+                            if (!IsTransparentBlock(x, y - 1, z, _blocks[x, y, z])) BlockMeshBuilder.GenerateMeshBottom(x, y, z, _blocks[x, y, z].Texture.BottomTexture, MeshGeneratedCallback);
                         }
                     }
                 }
@@ -179,13 +179,21 @@ namespace VoxelGame.Game
             return false;
         }
         
-        private bool IsTransparentBlock(int x, int y, int z)
+        private bool IsTransparentBlock(int x, int y, int z, Block neighboringOriginalBlock)
         {
             if (y == -1 || y == Height)
                 return false;
 
             if (x >= 0 && y >= 0 && z >= 0 && x < Width && y < Height && z < Width)
-                return _blocks[x, y, z] != null && _blocks[x, y, z].ItemId != "air";
+            {
+                if (neighboringOriginalBlock != null && _blocks[x, y, z] != null)
+                {
+                    if (_blocks[x, y, z].IsTransparent && neighboringOriginalBlock.ItemId == _blocks[x, y, z].ItemId)
+                        return true;
+                }
+
+                return _blocks[x, y, z] != null && _blocks[x, y, z].ItemId != "air" && (neighboringOriginalBlock == null || !_blocks[x, y, z].IsTransparent);
+            }
             
             int cx = (int)Math.Floor(x + Position.X);
             int cy = y;
@@ -194,7 +202,17 @@ namespace VoxelGame.Game
             var c = ChunkManager.GetChunkByPoint(new(cx, cy, cz));
 
             if (c != null)
-                return c._blocks[cx - (int)Math.Floor(c.Position.X), cy, cz - (int)Math.Floor(c.Position.Y)] != null && c._blocks[cx - (int)Math.Floor(c.Position.X), cy, cz - (int)Math.Floor(c.Position.Y)].ItemId != "air";
+            {
+                var block = c._blocks[cx - (int)Math.Floor(c.Position.X), cy, cz - (int)Math.Floor(c.Position.Y)];
+
+                if (neighboringOriginalBlock != null && block != null)
+                {
+                    if (block.IsTransparent && neighboringOriginalBlock.ItemId == block.ItemId)
+                        return true;
+                }
+
+                return block != null && block.ItemId != "air" && (neighboringOriginalBlock == null || !block.IsTransparent);
+            }
                 
             int noiseY = Noise.GetNoise(x + (int)Math.Round(Position.X), z + (int)Math.Round(Position.Y));
             return noiseY >= y;
@@ -242,41 +260,41 @@ namespace VoxelGame.Game
                     lightLevel -= 0.8f;
                     break;
                 case FaceSide.Top:
-                    if (IsTransparentBlock(vX, vY, vZ)
-                        || IsTransparentBlock(vX - 1, vY, vZ)
-                        || IsTransparentBlock(vX, vY, vZ - 1)
-                        || IsTransparentBlock(vX - 1, vY, vZ - 1)
+                    if (IsTransparentBlock(vX, vY, vZ, null)
+                        || IsTransparentBlock(vX - 1, vY, vZ, null)
+                        || IsTransparentBlock(vX, vY, vZ - 1, null)
+                        || IsTransparentBlock(vX - 1, vY, vZ - 1, null)
                         
-                        || IsTransparentBlock(vX, vY + 1, vZ)
-                        || IsTransparentBlock(vX - 1, vY + 1, vZ - 1))
+                        || IsTransparentBlock(vX, vY + 1, vZ, null)
+                        || IsTransparentBlock(vX - 1, vY + 1, vZ - 1, null))
                     {
                         lightLevel -= 0.35f;
                     }
                     break;
                 case FaceSide.Front:
-                    if (IsTransparentBlock(vX, vY - 1, vZ - 1)
-                        || IsTransparentBlock(vX - 1, vY - 1, vZ - 1))
+                    if (IsTransparentBlock(vX, vY - 1, vZ - 1, null)
+                        || IsTransparentBlock(vX - 1, vY - 1, vZ - 1, null))
                     {
                         lightLevel -= 0.35f;
                     }
                     break;
                 case FaceSide.Left:
-                    if (IsTransparentBlock(vX - 1, vY - 1, vZ)
-                        || IsTransparentBlock(vX - 1, vY - 1, vZ - 1))
+                    if (IsTransparentBlock(vX - 1, vY - 1, vZ, null)
+                        || IsTransparentBlock(vX - 1, vY - 1, vZ - 1, null))
                     {
                         lightLevel -= 0.35f;
                     }
                     break;
                 case FaceSide.Right:
-                    if (IsTransparentBlock(vX, vY - 1, vZ)
-                        || IsTransparentBlock(vX, vY - 1, vZ - 1))
+                    if (IsTransparentBlock(vX, vY - 1, vZ, null)
+                        || IsTransparentBlock(vX, vY - 1, vZ - 1, null))
                     {
                         lightLevel -= 0.35f;
                     }
                     break;
                 case FaceSide.Back:
-                    if (IsTransparentBlock(vX, vY - 1, vZ)
-                        || IsTransparentBlock(vX - 1, vY - 1, vZ))
+                    if (IsTransparentBlock(vX, vY - 1, vZ, null)
+                        || IsTransparentBlock(vX - 1, vY - 1, vZ, null))
                     {
                         lightLevel -= 0.35f;
                     }

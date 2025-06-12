@@ -1,0 +1,13 @@
+{
+  "id": "pine_trunk",
+  "name": "Pine Tree Trunk",
+  "max_stack": 100,
+  "hardness": 1,
+  "transparent": false,
+    "texture": [
+        "pine_trunk_side",
+        "pine_trunk_top"
+    ],
+  "camera_relative": false,
+  "gravity": false
+}

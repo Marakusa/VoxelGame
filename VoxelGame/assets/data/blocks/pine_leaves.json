@@ -1,0 +1,12 @@
+{
+    "id": "pine_leaves",
+    "name": "Pine Tree Leaves",
+    "max_stack": 100,
+    "hardness": 0.2,
+    "transparent": true,
+    "texture": [
+        "pine_leaves"
+    ],
+    "camera_relative": false,
+    "gravity": false
+}
