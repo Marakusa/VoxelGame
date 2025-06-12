@@ -26,6 +26,8 @@ namespace VoxelGame.Engine
         private Player _player;
         private Camera _playerCamera;
 
+        public bool CursorVisible { get; private set; }
+
         protected override void OnLoad()
         {
             Noise.SetNoise(1f, 1f);
@@ -116,14 +118,14 @@ namespace VoxelGame.Engine
             {
                 _playerCamera.Look(MousePosition);
                 MousePosition = new(Size.X / 2f, Size.Y / 2f);
-                _playerCamera.LastMousePosition = new(Size.X / 2f, Size.Y / 2f);
-                _playerCamera.CurrentMousePosition = new(Size.X / 2f, Size.Y / 2f);
+                _playerCamera.UpdateMouseLock(new Vector2(Size.X / 2f, Size.Y / 2f));
             }
 
             base.OnMouseMove(e);
         }
 
         private bool _mouseDown;
+
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
             if (_playerCamera.IsLocked && !_mouseDown)

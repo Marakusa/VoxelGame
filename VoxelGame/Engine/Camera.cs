@@ -23,7 +23,7 @@ namespace VoxelGame.Engine
         private const float Speed = 15.0f;
         private const float Sensitivity = 0.1f;
 
-        public Vector2 LastMousePosition, CurrentMousePosition;
+        private Vector2 _lastMousePosition, _currentMousePosition;
         private float _pitch = 0f;
         private float _yaw = 0f;
 
@@ -50,34 +50,46 @@ namespace VoxelGame.Engine
             //Console.WriteLine(Position.ToString());
         }
 
+        public void UpdateMouseLock(Vector2 value)
+        {
+            value = new Vector2(MathF.Floor(value.X), MathF.Floor(value.Y));
+            _lastMousePosition = value;
+            _currentMousePosition = value;
+        }
+
         public void Look(Vector2 mousePosition)
         {
             if (_firstMouse)
             {
-                LastMousePosition = new Vector2(mousePosition.X, mousePosition.Y);
+                _lastMousePosition = new Vector2(MathF.Floor(mousePosition.X), MathF.Floor(mousePosition.Y));
                 _firstMouse = false;
+                return;
             }
-            else
-            {
-                CurrentMousePosition = new Vector2(mousePosition.X, mousePosition.Y);
-                
-                float deltaX = CurrentMousePosition.X - LastMousePosition.X;
-                float deltaY = CurrentMousePosition.Y - LastMousePosition.Y;
-                LastMousePosition = CurrentMousePosition;
 
-                _yaw += deltaX * Sensitivity;
-                _pitch -= deltaY * Sensitivity;
+            _currentMousePosition = new Vector2(MathF.Floor(mousePosition.X), MathF.Floor(mousePosition.Y));
+            Console.WriteLine(mousePosition + " : " + _currentMousePosition);
 
-                if (_pitch > 89.0f)
-                    _pitch = 89.0f;
-                else if (_pitch < -89.0f)
-                    _pitch = -89.0f;
+            float deltaX = _currentMousePosition.X - _lastMousePosition.X;
+            float deltaY = _currentMousePosition.Y - _lastMousePosition.Y;
+            Console.WriteLine(_lastMousePosition + " > " + _currentMousePosition);
+            _lastMousePosition = _currentMousePosition;
 
-                Front.X = (float)Math.Cos(MathHelper.DegreesToRadians(_pitch)) * (float)Math.Cos(MathHelper.DegreesToRadians(_yaw));
-                Front.Y = (float)Math.Sin(MathHelper.DegreesToRadians(_pitch));
-                Front.Z = (float)Math.Cos(MathHelper.DegreesToRadians(_pitch)) * (float)Math.Sin(MathHelper.DegreesToRadians(_yaw));
-                Front = Vector3.Normalize(Front);
-            }
+            Console.WriteLine(deltaX + ", " + deltaY);
+
+            _yaw += deltaX * Sensitivity;
+            _pitch -= deltaY * Sensitivity;
+
+            _pitch = Math.Clamp(_pitch, -89.0f, 89.0f);
+
+            float yawRad = MathHelper.DegreesToRadians(_yaw);
+            float pitchRad = MathHelper.DegreesToRadians(_pitch);
+
+            Front = new Vector3(
+                (float)(Math.Cos(pitchRad) * Math.Cos(yawRad)),
+                (float)Math.Sin(pitchRad),
+                (float)(Math.Cos(pitchRad) * Math.Sin(yawRad))
+            );
+            Front = Vector3.Normalize(Front);
         }
 
         public void Movement(FrameEventArgs e)

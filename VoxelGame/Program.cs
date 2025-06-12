@@ -7,8 +7,6 @@ namespace VoxelGame
     {
         private static void Main(string[] args)
         {
-            Console.WriteLine("Voxel Game by Markus Kannisto");
-
             TextureManager textureManager = new();
             
             using Engine.Game game = new(1360, 786, "Voxel Game");

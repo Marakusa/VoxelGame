@@ -26,7 +26,7 @@ namespace VoxelGame.Game
                 var texture = Instance._textures[name];
                 return new(texture[0], texture[1], texture[2], texture[3]);
             }
-            
+
             return new(0, 0, 1, 1);
         }
 
@@ -44,28 +44,31 @@ namespace VoxelGame.Game
                 {
                     Image<Rgba32> image = Image.Load<Rgba32>(textureFile);
 
-                    for (int y = 0; y < image.Height; y++)
+                    image.ProcessPixelRows(accessor =>
                     {
-                        var row = image.GetPixelRowSpan(y);
-
-                        for (int x = 0; x < image.Width; x++)
+                        for (int y = 0; y < accessor.Height; y++)
                         {
-                            byte r = row[x].R;
-                            byte g = row[x].G;
-                            byte b = row[x].B;
-                            byte a = row[x].A;
-                            _textureAtlas[x + indexX * 16, y + indexY * 16] = new Rgba32(r, g, b, a);
+                            var row = accessor.GetRowSpan(y);
+
+                            for (int x = 0; x < accessor.Width; x++)
+                            {
+                                byte r = row[x].R;
+                                byte g = row[x].G;
+                                byte b = row[x].B;
+                                byte a = row[x].A;
+                                _textureAtlas[x + indexX * 16, y + indexY * 16] = new Rgba32(r, g, b, a);
+                            }
                         }
-                    }
+                    });
 
                     const float divider = 1f / 16.0f;
                     _textures.Add(Path.GetFileNameWithoutExtension(textureFile), new[]
                     {
-                        indexX * divider,
-                        indexY * divider,
-                        divider,
-                        divider
-                    });
+                            indexX * divider,
+                            indexY * divider,
+                            divider,
+                            divider
+                        });
 
                     indexX++;
 
